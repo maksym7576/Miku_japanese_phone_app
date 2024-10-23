@@ -13,7 +13,7 @@ export const loginUser = async (username, password) => {
     const data = await response.json();
     
     if (!response.ok) {
-      throw new Error(data.message || 'Error in entering i');
+      throw new Error(data.message || 'Error in entering in the account');
     }
 
     return data;

@@ -12,7 +12,7 @@ const LoginForm = ({ navigation }) => {
       const userData = await loginUser(username, password);
       navigation.replace('Main', { username: userData.username });
     } catch (error) {
-      Alert.alert('Помилка', error.message);
+      Alert.alert('Error', error.message);
     }
   };
 
