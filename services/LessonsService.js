@@ -1,17 +1,23 @@
 import { API_CONFIG } from '../config';
 
-export const getAllLessons = async () =>{
+export const getAllSortedLessons = async () => {
     try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}/lesson/get`, {
-            method: 'GET'
-        });
-
-        const data = await response.json();
-        if(!response.ok) {
-            throw new Error(data.message || 'Error to load all lessons') 
+      const response = await fetch(`${API_CONFIG.BASE_URL}/lesson/get/sorted`, {
+        headers: {
+            'Accept': 'application/json'
         }
-        return data;
-    } catch (error) {
-        throw new Error(error.message || 'Error fetching lessons');
+    });
+
+    if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Error response:', errorText);
+        throw new Error(`HTTP error! status: ${response.status}`);
     }
+
+    const data = await response.json();
+    return data;
+} catch (error) {
+    console.error('Error fetching lessons:', error);
+    throw new Error('Error fetching lessons: ' + error.message);
+}
 };

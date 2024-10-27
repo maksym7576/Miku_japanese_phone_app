@@ -1,4 +1,5 @@
 import { API_CONFIG } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export const loginUser = async (username, password) => {
   try {
@@ -14,6 +15,10 @@ export const loginUser = async (username, password) => {
     
     if (!response.ok) {
       throw new Error(data.message || 'Error in entering in the account');
+    }
+
+    if (data.token) {
+      await AsyncStorage.setItem('userToken', data.token);
     }
 
     return data;
@@ -36,6 +41,10 @@ export const registerUser = async (username, email, password) => {
     
     if (!response.ok) {
       throw new Error(data.message || 'Error in registration');
+    }
+
+    if (data.token) {
+      await AsyncStorage.setItem('userToken', data.token);
     }
 
     return data;

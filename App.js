@@ -1,4 +1,5 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -65,12 +66,34 @@ function TabNavigator() {
 }
 
 export default function App() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+
+  useEffect(() => {
+    const checkToken = async () => {
+      try {
+        const token = await AsyncStorage.getItem('userToken');
+        if (token) {
+          setIsAuthenticated(true);
+        }
+      } catch (error) {
+        console.error('Error checking token:', error);
+      }
+    };
+
+    checkToken();
+  }, []);
+
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Auth">
-        <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
-        <Stack.Screen name="LessonDetailScreen" component={LessonDetailScreen} />
+      <Stack.Navigator>
+        {isAuthenticated ? (
+          <>
+            <Stack.Screen name="Main" component={TabNavigator} options={{ headerShown: false }} />
+            <Stack.Screen name="LessonDetailScreen" component={LessonDetailScreen} />
+          </>
+        ) : (
+          <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
+        )}
       </Stack.Navigator>
     </NavigationContainer>
   );
