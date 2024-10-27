@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { useRoute } from '@react-navigation/native';
-import styles from '../styles/styles'; // Make sure you have some styling for this screen
+import styles from '../styles/MainScreen'; // Make sure you have some styling for this screen
 
 const LessonDetailScreen = () => {
     const route = useRoute();

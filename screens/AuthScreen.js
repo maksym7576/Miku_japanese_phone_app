@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import LoginForm from '../components/LoginForm';
 import RegisterForm from '../components/RegisterForm';
-import styles from '../styles/styles';
+import styles from '../styles/MainScreen';
 
 const AuthScreen = ({ navigation }) => {
   const [isLogin, setIsLogin] = useState(true);
