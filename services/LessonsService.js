@@ -1,8 +1,8 @@
-const API_URL = 'http://localhost:8080/api/lesson'
+import { API_CONFIG } from '../config';
 
 export const getAllLessons = async () =>{
     try {
-        const response = await fetch(`${API_URL}/get`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/lesson/get`, {
             method: 'GET'
         });
 
