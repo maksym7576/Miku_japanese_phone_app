@@ -3,8 +3,7 @@ import { View, Text } from 'react-native';
 import styles from '../styles/styles';
 import LessonsList from '../components/LessonsList';
 
-const MainScreen = ({ route }) => {
-  const { username } = route.params;
+const MainScreen = () => {
 
   return (
     <View style={styles.container}>
