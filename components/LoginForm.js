@@ -1,23 +1,25 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, Alert } from 'react-native';
+import { View, TextInput, TouchableOpacity, Text, Alert, Button } from 'react-native';
 import styles from '../styles/auth';
 import { loginUser } from '../services/authService';
+import { useNavigation } from '@react-navigation/native';
 
-const LoginForm = ({ navigation }) => {
+const LoginForm = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const navigation = useNavigation();
 
   const handleLogin = async () => {
     try {
-      const userData = await loginUser(username, password);
-      navigation.replace('Main');
+      await loginUser(username, password);
+      navigation.navigate('Lessons')
     } catch (error) {
       Alert.alert('Error', error.message);
     }
   };
 
   return (
-    <View style={styles.form}>
+    <View style={styles.container}>
       <TextInput
         style={styles.input}
         placeholder="Username"
@@ -31,9 +33,7 @@ const LoginForm = ({ navigation }) => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Login</Text>
-      </TouchableOpacity>
+      <Button title="Login" onPress={handleLogin} />
     </View>
   );
 };

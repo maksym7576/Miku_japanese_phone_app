@@ -28,7 +28,7 @@ const MainNavigator = () => {
               iconName = focused ? 'person' : 'person-outline';
               break;
             default:
-              iconName = 'alert-outline'; // Default icon
+              iconName = 'alert-outline';
           }
           return <Ionicons name={iconName} size={size} color={color} />;
         },
@@ -37,7 +37,7 @@ const MainNavigator = () => {
         tabBarStyle: {
           paddingBottom: 5,
           height: 60,
-        }
+        },
       })}
     >
       <Tab.Screen name="Lessons" component={MainScreen} options={{ headerShown: false }} />
