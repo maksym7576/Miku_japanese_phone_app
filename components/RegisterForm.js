@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, Alert } from 'react-native';
 import styles from '../styles/auth';
 import { registerUser } from '../services/authService';
+import { useNavigation } from '@react-navigation/native';
 
-const RegisterForm = ({ navigation }) => {
+const RegisterForm = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const navigation = useNavigation();
 
   const handleRegister = async () => {
     if (password !== confirmPassword) {
@@ -17,7 +19,7 @@ const RegisterForm = ({ navigation }) => {
 
     try {
       await registerUser(username, email ,password);
-      navigation.replace('Main');
+      navigation.navigate('Lessons');
     } catch (error) {
       Alert.alert('Error', error.message);
     }
