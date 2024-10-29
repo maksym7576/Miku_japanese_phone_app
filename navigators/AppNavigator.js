@@ -39,7 +39,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Shop" component={ShopScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="LessonDetail" component={LessonDetailScreen} />
-      {/* <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} /> */}
+      <Stack.Screen name="logout" component={AuthScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 };
