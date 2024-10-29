@@ -10,7 +10,7 @@ const LoginForm = ({ navigation }) => {
   const handleLogin = async () => {
     try {
       const userData = await loginUser(username, password);
-      navigation.replace('Main', { username: userData.username });
+      navigation.replace('Main');
     } catch (error) {
       Alert.alert('Error', error.message);
     }

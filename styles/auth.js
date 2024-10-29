@@ -8,6 +8,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     backgroundColor: '#f8f9fa',
   },
+  errorText: {
+    color: 'red',
+    marginBottom: 10,
+  },  
   form: {
     width: '100%',
     paddingHorizontal: 20,
