@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, TextInput, TouchableOpacity, Text, Alert } from 'react-native';
-import styles from '../styles/MainScreen';
+import styles from '../styles/auth';
 import { loginUser } from '../services/authService';
 
 const LoginForm = ({ navigation }) => {
