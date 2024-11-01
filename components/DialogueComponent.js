@@ -1,19 +1,23 @@
-import React, { useState } from 'react';
+import React, { Component } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import styles from '../styles/VerticalContentListStyles';
 
-const DialogueComponent = ({ dialogue }) => {
-    const [displayType, setDisplayType] = useState('original');
-    const [isTranslationVisible, setIsTranslationVisible] = useState(false);
+class DialogueComponent extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            isTranslationVisible: false,
+        };
+    }
 
-    const displayTypes = ['original', 'hiragana', 'romanji'];
-
-    const toggleDisplayType = () => {
-        const currentIndex = displayTypes.indexOf(displayType);
-        setDisplayType(displayTypes[(currentIndex + 1) % displayTypes.length]);
+    toggleTranslationVisibility = () => {
+        this.setState((prevState) => ({
+            isTranslationVisible: !prevState.isTranslationVisible,
+        }));
     };
 
-    const getDisplayText = (type) => {
+    getDisplayText = (type) => {
+        const { dialogue } = this.props;
         const typeMap = {
             'original': dialogue.dialogue_hiragana_katakana_kanji,
             'hiragana': dialogue.dialogue_hiragana_katakana,
@@ -22,35 +26,29 @@ const DialogueComponent = ({ dialogue }) => {
         return typeMap[type] || typeMap['original'];
     };
 
-    return (
-        <View style={styles.dialogueContainer}>
-            <TouchableOpacity 
-                onPress={toggleDisplayType} 
-                style={styles.typeToggleButton}
-            >
-                <Text style={styles.toggleButtonText}>
-                    {displayType.charAt(0).toUpperCase() + displayType.slice(1)}
-                </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity 
-                onPress={() => setIsTranslationVisible(!isTranslationVisible)} 
-                style={styles.dialogueTextContainer}
-            >
-                <Text style={styles.dialogueText}>
-                    {getDisplayText(displayType)}
-                </Text>
-            </TouchableOpacity>
-
-            {isTranslationVisible && (
-                <View style={styles.translationContainer}>
-                    <Text style={styles.translationText}>
-                        {dialogue.translation}
+    render() {
+        const { displayType, dialogue } = this.props;
+        return (
+            <View style={styles.dialogueContainer}>
+                <TouchableOpacity 
+                    onPress={this.toggleTranslationVisibility} 
+                    style={styles.dialogueTextContainer}
+                >
+                    <Text style={styles.dialogueText}>
+                        {this.getDisplayText(displayType)}
                     </Text>
-                </View>
-            )}
-        </View>
-    );
-};
+                </TouchableOpacity>
+
+                {this.state.isTranslationVisible && (
+                    <View style={styles.translationContainer}>
+                        <Text style={styles.translationText}>
+                            {dialogue.translation}
+                        </Text>
+                    </View>
+                )}
+            </View>
+        );
+    }
+}
 
 export default DialogueComponent;
