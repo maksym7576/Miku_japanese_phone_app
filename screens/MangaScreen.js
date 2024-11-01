@@ -55,10 +55,25 @@ class MangaScreen extends Component {
                 );
             case 'image':
                 const imageSource = `data:image/jpeg;base64,${item.content.imageData}`;
+                const dialogueText = item.content.mangaPhotoDescription;
+    
+                // Determine bubble style based on position
+                let bubbleStyle;
+                if (item.content.position === 'left') {
+                    bubbleStyle = [styles.bubble, styles.leftBubble];
+                } else if (item.content.position === 'right') {
+                    bubbleStyle = [styles.bubble, styles.rightBubble];
+                } else { // center
+                    bubbleStyle = [styles.bubble, styles.centerBubble];
+                }
+    
                 return (
                     <View key={`image-${index}`} style={styles.imageContainer}>
                         <Image source={{ uri: imageSource }} style={styles.image} />
-                        {/* <Text style={styles.imageText}>{item.content.caption || `Image ${item.content.id}`}</Text> */}
+                        <View style={bubbleStyle}>
+                            <Text style={styles.bubbleText}>{dialogueText.dialogue_hiragana_katakana}</Text>
+                            <View style={styles.arrow} />
+                        </View>
                     </View>
                 );
             case 'question':
@@ -69,6 +84,7 @@ class MangaScreen extends Component {
                 return null;
         }
     };
+    
 
     render() {
         return (
@@ -87,7 +103,10 @@ class MangaScreen extends Component {
                     </TouchableOpacity>
                 ) : (
                     <TouchableOpacity
-                        onPress={() => {/* Додайте логіку закінчення */}}
+                        onPress={() => {
+                            // Add finish logic here
+                            console.log("Finished reading!");
+                        }}
                         style={styles.nextButton}
                     >
                         <Text style={styles.nextButtonText}>Finish</Text>
