@@ -8,6 +8,7 @@ import MainScreen from '../screens/MainScreen';
 import MikuScreen from '../screens/MikuScreen';
 import ShopScreen from '../screens/ShopScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import MangaScreen from '../screens/MangaScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -40,6 +41,7 @@ const AppNavigator = () => {
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="LessonDetail" component={LessonDetailScreen} />
       <Stack.Screen name="logout" component={AuthScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="manga" component={MangaScreen}/>
     </Stack.Navigator>
   );
 };
