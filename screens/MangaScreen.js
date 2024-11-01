@@ -26,15 +26,19 @@ class MangaScreen extends Component {
         });
     };
 
-    handleNextContent = () => {
-        if (this.state.contentList.length > 0) {
-            const [nextContent, ...remainingContent] = this.state.contentList;
-            this.setState((prevState) => ({
-                displayedContent: [...prevState.displayedContent, nextContent],
-                contentList: remainingContent,
-            }));
-        }
-    };
+   handleNextContent = () => {
+    if (this.state.contentList.length > 0) {
+        const [nextContent, ...remainingContent] = this.state.contentList;
+        this.setState((prevState) => ({
+            displayedContent: [
+                ...prevState.displayedContent,
+                { ...nextContent, position: prevState.currentPosition === 'left' ? 'right' : 'left' }
+            ],
+            contentList: remainingContent,
+            currentPosition: prevState.currentPosition === 'left' ? 'right' : 'left',
+        }));
+    }
+};
 
     renderContent = (item, index) => {
         switch (item.type) {
@@ -57,18 +61,23 @@ class MangaScreen extends Component {
                 const imageSource = `data:image/jpeg;base64,${item.content.imageData}`;
                 const dialogueText = item.content.mangaPhotoDescription;
     
-                // Determine bubble style based on position
-                let bubbleStyle;
+                // Determine bubble and image container style based on the position field
+                let bubbleStyle = [styles.bubble];
+                let imageContainerStyle = [styles.imageContainer];
+    
                 if (item.content.position === 'left') {
-                    bubbleStyle = [styles.bubble, styles.leftBubble];
+                    bubbleStyle.push(styles.leftBubble);
+                    imageContainerStyle.push(styles.leftImage);
                 } else if (item.content.position === 'right') {
-                    bubbleStyle = [styles.bubble, styles.rightBubble];
-                } else { // center
-                    bubbleStyle = [styles.bubble, styles.centerBubble];
+                    bubbleStyle.push(styles.rightBubble);
+                    imageContainerStyle.push(styles.rightImage);
+                } else {
+                    bubbleStyle.push(styles.centerBubble);
+                    imageContainerStyle.push(styles.centerImage);
                 }
     
                 return (
-                    <View key={`image-${index}`} style={styles.imageContainer}>
+                    <View key={`image-${index}`} style={imageContainerStyle}>
                         <Image source={{ uri: imageSource }} style={styles.image} />
                         <View style={bubbleStyle}>
                             <Text style={styles.bubbleText}>{dialogueText.dialogue_hiragana_katakana}</Text>
@@ -104,7 +113,6 @@ class MangaScreen extends Component {
                 ) : (
                     <TouchableOpacity
                         onPress={() => {
-                            // Add finish logic here
                             console.log("Finished reading!");
                         }}
                         style={styles.nextButton}

@@ -28,9 +28,17 @@ export default StyleSheet.create({
         color: '#666',
     },
     imageContainer: {
-        alignItems: 'center',
         margin: 8,
-        position: 'relative', // Required for positioning the bubble relative to the image
+        position: 'relative',
+    },
+    leftImage: {
+        alignItems: 'flex-start',
+    },
+    rightImage: {
+        alignItems: 'flex-end',
+    },
+    centerImage: {
+        alignItems: 'center',
     },
     image: {
         width: imageWidth,
@@ -40,7 +48,7 @@ export default StyleSheet.create({
     },
     bubble: {
         position: 'absolute',
-        bottom: '100%', // Position the bubble above the image
+        bottom: '100%',
         backgroundColor: '#fff',
         borderRadius: 20,
         padding: 10,
@@ -48,7 +56,7 @@ export default StyleSheet.create({
         shadowOpacity: 0.2,
         shadowRadius: 4,
         shadowOffset: { width: 0, height: 2 },
-        zIndex: 1, // Ensure the bubble is above the image
+        zIndex: 1,
     },
     bubbleText: {
         fontSize: 16,
@@ -57,9 +65,9 @@ export default StyleSheet.create({
     },
     arrow: {
         position: 'absolute',
-        top: '100%', // Position the arrow at the bottom of the bubble
+        top: '100%',
         left: '50%',
-        transform: [{ translateX: -5 }], // Center the arrow
+        transform: [{ translateX: -5 }],
         width: 0,
         height: 0,
         borderLeftWidth: 10,
@@ -67,21 +75,21 @@ export default StyleSheet.create({
         borderRightWidth: 10,
         borderRightColor: 'transparent',
         borderTopWidth: 10,
-        borderTopColor: '#fff', // Color of the arrow (same as the bubble)
+        borderTopColor: '#fff',
     },
-    // Specific styles for bubble positioning based on alignment
     leftBubble: {
-        left: 10, // Distance from the left side
-        width: '60%', // Width of the bubble for left position
+        alignSelf: 'flex-start',
+        marginLeft: 10,
+        width: '45%',
     },
     rightBubble: {
-        right: 10, // Distance from the right side
-        width: '60%', // Width of the bubble for right position
+        alignSelf: 'flex-end',
+        marginRight: 10,
+        width: '45%',
     },
     centerBubble: {
-        left: '50%',
-        transform: [{ translateX: -50 }], // Center the bubble
-        width: '80%', // Wider for center position
+        alignSelf: 'center',
+        width: '80%',
     },
     toggleButton: {
         padding: 12,
@@ -104,6 +112,18 @@ export default StyleSheet.create({
         margin: 10,
     },
     nextButtonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    positionButton: {
+        padding: 12,
+        backgroundColor: '#34A853',
+        borderRadius: 8,
+        alignItems: 'center',
+        margin: 10,
+    },
+    positionButtonText: {
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
