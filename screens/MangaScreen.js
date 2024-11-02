@@ -26,21 +26,57 @@ class MangaScreen extends Component {
         });
     };
 
-   handleNextContent = () => {
+ handleNextContent = () => {
     if (this.state.contentList.length > 0) {
         const [nextContent, ...remainingContent] = this.state.contentList;
-        this.setState((prevState) => ({
-            displayedContent: [
-                ...prevState.displayedContent,
-                { ...nextContent, position: prevState.currentPosition === 'left' ? 'right' : 'left' }
-            ],
-            contentList: remainingContent,
-            currentPosition: prevState.currentPosition === 'left' ? 'right' : 'left',
-        }));
+
+        // Перевіряємо, чи є наступні два елементи зображеннями з `left` і `right`
+        if (
+            nextContent.type === 'image' &&
+            remainingContent[0] &&
+            remainingContent[0].type === 'image' &&
+            nextContent.content.position === 'left' &&
+            remainingContent[0].content.position === 'right'
+        ) {
+            // Додаємо обидва зображення з позиціями `left` і `right` в один рядок
+            this.setState((prevState) => ({
+                displayedContent: [
+                    ...prevState.displayedContent,
+                    { left: nextContent, right: remainingContent[0] }
+                ],
+                contentList: remainingContent.slice(1), // Видаляємо два елементи
+            }));
+        } else {
+            // Звичайне додавання контенту
+            this.setState((prevState) => ({
+                displayedContent: [...prevState.displayedContent, nextContent],
+                contentList: remainingContent,
+            }));
+        }
     }
 };
 
-    renderContent = (item, index) => {
+renderContent = (item, index) => {
+    if (item.left && item.right) {
+        // Якщо `item` містить обидва зображення `left` та `right`, відображаємо їх поруч
+        return (
+            <View key={`pair-${index}`} style={styles.imageRowContainer}>
+                <View style={[styles.imageContainer, styles.leftImage]}>
+                    <Image source={{ uri: `data:image/jpeg;base64,${item.left.content.imageData}` }} style={styles.image} />
+                    <View style={[styles.bubble, styles.leftBubble]}>
+                        <Text style={styles.bubbleText}>{item.left.content.mangaPhotoDescription.dialogue_hiragana_katakana}</Text>
+                    </View>
+                </View>
+                <View style={[styles.imageContainer, styles.rightImage]}>
+                    <Image source={{ uri: `data:image/jpeg;base64,${item.right.content.imageData}` }} style={styles.image} />
+                    <View style={[styles.bubble, styles.rightBubble]}>
+                        <Text style={styles.bubbleText}>{item.right.content.mangaPhotoDescription.dialogue_hiragana_katakana}</Text>
+                    </View>
+                </View>
+            </View>
+        );
+    } else {
+        // Інші випадки
         switch (item.type) {
             case 'dialogue':
                 return (
@@ -57,34 +93,37 @@ class MangaScreen extends Component {
                         <Text style={styles.startDialogue}>{item.content.startDialogue}</Text>
                     </View>
                 );
-            case 'image':
-                const imageSource = `data:image/jpeg;base64,${item.content.imageData}`;
-                const dialogueText = item.content.mangaPhotoDescription;
-    
-                // Determine bubble and image container style based on the position field
-                let bubbleStyle = [styles.bubble];
-                let imageContainerStyle = [styles.imageContainer];
-    
-                if (item.content.position === 'left') {
-                    bubbleStyle.push(styles.leftBubble);
-                    imageContainerStyle.push(styles.leftImage);
-                } else if (item.content.position === 'right') {
-                    bubbleStyle.push(styles.rightBubble);
-                    imageContainerStyle.push(styles.rightImage);
-                } else {
-                    bubbleStyle.push(styles.centerBubble);
-                    imageContainerStyle.push(styles.centerImage);
-                }
-    
-                return (
-                    <View key={`image-${index}`} style={imageContainerStyle}>
-                        <Image source={{ uri: imageSource }} style={styles.image} />
-                        <View style={bubbleStyle}>
-                            <Text style={styles.bubbleText}>{dialogueText.dialogue_hiragana_katakana}</Text>
-                            <View style={styles.arrow} />
+                case 'image':
+                    const imageSource = `data:image/jpeg;base64,${item.content.imageData}`;
+                    const dialogueText = item.content.mangaPhotoDescription;
+                
+                    let bubbleStyle = [styles.bubble];
+                    let imageContainerStyle = [styles.imageContainer];
+                    let imageStyle = [styles.image];
+                
+                    if (item.content.position === 'center') {
+                        bubbleStyle.push(styles.centerBubble);
+                        imageContainerStyle.push(styles.centerImageContainer);
+                    } else {
+                        bubbleStyle.push(
+                            item.content.position === 'left' ? styles.leftBubble : styles.rightBubble
+                        );
+                        imageContainerStyle.push(
+                            item.content.position === 'left' ? styles.leftImageContainer : styles.rightImageContainer
+                        );
+                        imageStyle.push(styles.halfImage); // зменшуємо зображення вдвічі для лівої/правої позицій
+                    }
+                
+                    return (
+                        <View key={`image-${index}`} style={imageContainerStyle}>
+                            <Image source={{ uri: imageSource }} style={imageStyle} />
+                            <View style={bubbleStyle}>
+                                <Text style={styles.bubbleText}>{dialogueText.dialogue_hiragana_katakana}</Text>
+                                <View style={styles.arrow} />
+                            </View>
                         </View>
-                    </View>
-                );
+                    );
+                
             case 'question':
                 return (
                     <QuestionComponent key={`question-${index}`} question={item.content} />
@@ -92,7 +131,9 @@ class MangaScreen extends Component {
             default:
                 return null;
         }
-    };
+    }
+};
+
     
 
     render() {
