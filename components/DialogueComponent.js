@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import styles from '../styles/VerticalContentListStyles';
+import mainStyles  from '../styles/MainScreenStyles';
 
 class DialogueComponent extends Component {
     constructor(props) {
@@ -29,19 +29,19 @@ class DialogueComponent extends Component {
     render() {
         const { displayType, dialogue } = this.props;
         return (
-            <View style={styles.dialogueContainer}>
+            <View style={mainStyles .dialogueContainer}>
                 <TouchableOpacity 
                     onPress={this.toggleTranslationVisibility} 
-                    style={styles.dialogueTextContainer}
+                    style={mainStyles .dialogueTextContainer}
                 >
-                    <Text style={styles.dialogueText}>
+                    <Text style={mainStyles .dialogueText}>
                         {this.getDisplayText(displayType)}
                     </Text>
                 </TouchableOpacity>
 
                 {this.state.isTranslationVisible && (
-                    <View style={styles.translationContainer}>
-                        <Text style={styles.translationText}>
+                    <View style={mainStyles .translationContainer}>
+                        <Text style={mainStyles .translationText}>
                             {dialogue.translation}
                         </Text>
                     </View>
