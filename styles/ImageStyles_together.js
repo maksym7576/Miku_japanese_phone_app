@@ -13,23 +13,25 @@ export default StyleSheet.create({
     },
     leftImageContainer: {
         flex: 1,
-        alignItems: 'center', // Вирівнюємо контент по центру
-        position: 'relative', // Додаємо позицію для контролю бульбашки
+        alignItems: 'center',
+        marginTop: 50,
+        position: 'relative',
     },
     rightImageContainer: {
         flex: 1,
-        alignItems: 'center', // Вирівнюємо контент по центру
-        position: 'relative', // Додаємо позицію для контролю бульбашки
+        alignItems: 'center',
+        marginTop: 50,
+        position: 'relative',
     },
     image: {
-        width: imageWidth / 2, // Зменшена ширина для лівої та правої позицій
+        width: imageWidth / 2,
         height: undefined,
         aspectRatio: 1,
         borderRadius: 8,
     },
     bubble: {
         position: 'absolute',
-        bottom: '100%', // Розміщуємо бульбашку над зображенням
+        bottom: '100%',
         backgroundColor: '#fff',
         borderRadius: 20,
         padding: 10,
@@ -38,14 +40,16 @@ export default StyleSheet.create({
         shadowRadius: 4,
         shadowOffset: { width: 0, height: 2 },
         zIndex: 1,
-        width: 'auto', // Або вкажіть бажану ширину
-        alignSelf: 'center', // Вирівнюємо по центру
-        marginBottom: 5, // Додаємо невеликий відступ для відстані до зображення
+        width: imageWidth / 2, // Встановлюємо ширину бульбашки рівною ширині фотографії
+        alignSelf: 'center',
+        marginBottom: 5,
     },
     bubbleText: {
-        fontSize: 14, // Зменшений розмір тексту
+        fontSize: 14,
         color: '#333',
         textAlign: 'center',
+        width: '100%', // Текст займає всю ширину бульбашки
+        flexWrap: 'wrap', // Дозволяємо тексту переноситися
     },
     arrow: {
         position: 'absolute',

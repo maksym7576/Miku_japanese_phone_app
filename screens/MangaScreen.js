@@ -5,7 +5,7 @@ import mainStyles  from '../styles/MainScreenStyles';
 import DialogueComponent from '../components/DialogueComponent';
 import QuestionComponent from '../components/QuestionComponent';
 import ImageComponent from '../components/ImageComponent';
-import styles   from '../styles/ImageStyles_together';
+import ImagesTogethterComponent from '../components/ImagesTogesterComponent';
 
 class MangaScreen extends Component {
     constructor(props) {
@@ -96,31 +96,12 @@ class MangaScreen extends Component {
                         />
                     );
                     case 'images_together':
-                        const { imageRight, imageLeft } = item.content; // Деструктуризація для зручності
-                    
                         return (
-                            <View key={`image_together-${index}`} style={styles.container}>
-                            <View style={styles.leftImageContainer}>
-                                <View style={styles.bubble}>
-                                    <Text style={styles.bubbleText}>{imageLeft.mangaPhotoDescription.dialogue_hiragana_katakana}</Text>
-                                    <View style={styles.arrow} />
-                                </View>
-                                <Image
-                                    source={{ uri: `data:image/jpeg;base64,${imageLeft.imageData}` }}
-                                    style={styles.image}
-                                />
-                            </View>
-                            <View style={styles.rightImageContainer}>
-                                <View style={styles.bubble}>
-                                    <Text style={styles.bubbleText}>{imageRight.mangaPhotoDescription.dialogue_hiragana_katakana}</Text>
-                                    <View style={styles.arrow} />
-                                </View>
-                                <Image
-                                    source={{ uri: `data:image/jpeg;base64,${imageRight.imageData}` }}
-                                    style={styles.image}
-                                />
-                            </View>
-                        </View>
+                            <ImagesTogethterComponent
+                                key={`image_together-${index}`}
+                                content={item.content}
+                                displayType={this.state.displayType}
+                            />
                         );
                     
                 case 'question':

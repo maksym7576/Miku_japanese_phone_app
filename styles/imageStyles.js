@@ -7,6 +7,7 @@ export default StyleSheet.create({
     imageContainer: {
         marginVertical: 20,
         marginHorizontal: 10,
+        marginTop: 60,
         position: 'relative',
     },
     centerImageContainer: {
