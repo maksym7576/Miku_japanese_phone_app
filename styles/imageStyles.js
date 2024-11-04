@@ -9,26 +9,13 @@ export default StyleSheet.create({
         marginHorizontal: 10,
         marginTop: 60,
         position: 'relative',
-    },
-    centerImageContainer: {
-        alignItems: 'center',
-    },
-    leftImageContainer: {
-        flex: 1,
-        alignItems: 'flex-start',
-    },
-    rightImageContainer: {
-        flex: 1,
-        alignItems: 'flex-end',
+        alignItems: 'center', // центрування контейнера зображення
     },
     image: {
-        width: imageWidth, // стандартна ширина для центрованих зображень
+        width: imageWidth,
         height: undefined,
         aspectRatio: 1,
         borderRadius: 8,
-    },
-    halfImage: {
-        width: imageWidth / 2, // зменшена ширина для лівої та правої позицій
     },
     bubble: {
         position: 'absolute',
@@ -41,6 +28,8 @@ export default StyleSheet.create({
         shadowRadius: 4,
         shadowOffset: { width: 0, height: 2 },
         zIndex: 1,
+        alignSelf: 'center', // центрування бульбашки
+        width: '80%',
     },
     bubbleText: {
         fontSize: 16,
@@ -60,19 +49,5 @@ export default StyleSheet.create({
         borderRightColor: 'transparent',
         borderTopWidth: 10,
         borderTopColor: '#fff',
-    },
-    leftBubble: {
-        alignSelf: 'flex-start',
-        marginLeft: 10,
-        width: '45%',
-    },
-    rightBubble: {
-        alignSelf: 'flex-end',
-        marginRight: 10,
-        width: '45%',
-    },
-    centerBubble: {
-        alignSelf: 'center',
-        width: '80%',
     },
 });
