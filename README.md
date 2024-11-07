@@ -20,6 +20,9 @@ This project is a mobile application for learning Japanese, featuring a task sys
    <p align="center">
      <img src="https://github.com/maksym7576/Miku_japanese_phone_app/blob/main/images/main_screen.jpg?raw=true" alt="Main Page">
    </p>
+    <p align="center">
+     <img src="https://github.com/maksym7576/Miku_japanese_phone_app/blob/main/images/Lesson_page.jpg?raw=true" alt="Main Page">
+   </p>
 
 3. **Toggle Manga Reading Type**  
    The third image demonstrates a button that toggles the manga reading type.
