@@ -1,57 +1,132 @@
-import React, { useState } from 'react';
+import React, { Component } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const QuestionComponent = ({ question }) => {
-    const [selectedAnswer, setSelectedAnswer] = useState(null);
-    const [isCorrect, setIsCorrect] = useState(null);
-
-    if (!question || !question.question || !question.answerMangas) {
-        return <Text>No questions available</Text>;
+class QuestionComponent extends Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            selectedAnswer: null,
+            isButtonDisabled: false,
+            resultText: '',
+            correctAnswersCount: 0,
+            incorrectAnswers: [],
+        };
     }
 
-    const handleAnswerSelect = (answer) => {
-        setSelectedAnswer(answer);
-        
-        // Перевірка правильності відповіді
+    componentDidMount() {
+        this.loadStoredData();
+    }
+
+    loadStoredData = async () => {
+        try {
+            const storedData = await AsyncStorage.getItem('quizResults');
+            if (storedData) {
+                const parsedData = JSON.parse(storedData);
+                this.setState({
+                    correctAnswersCount: parsedData.correctAnswers || 0,
+                    incorrectAnswers: parsedData.incorrectAnswers || [],
+                });
+            }
+        } catch (error) {
+            console.error('Error loading stored data:', error);
+        }
+    };
+
+    saveQuizResults = async () => {
+        try {
+            const { correctAnswersCount, incorrectAnswers } = this.state;
+            const quizData = {
+                correctAnswers: correctAnswersCount,
+                incorrectAnswers: incorrectAnswers,
+            };
+            await AsyncStorage.setItem('quizResults', JSON.stringify(quizData));
+        } catch (error) {
+            console.error('Error saving quiz results:', error);
+        }
+    };
+
+    handleAnswerSelect = async (answer) => {
+        const { question } = this.props; // Get the question object from props
+        const { correctAnswersCount, incorrectAnswers } = this.state;
+
+        this.setState({ selectedAnswer: answer, isButtonDisabled: true });
+
         const isCorrectAnswer = 
             answer.answer_romanji === question.correct_answer_romanized ||
             answer.answer_hiragana_katakana === question.correct_answer_hiragana_or_katakana;
-        
-        setIsCorrect(isCorrectAnswer);
+
+        if (isCorrectAnswer) {
+            this.setState(
+                { 
+                    resultText: 'Correct!', 
+                    correctAnswersCount: correctAnswersCount + 1 
+                }, 
+                this.saveQuizResults // Save the results after state update
+            );
+        } else {
+            // Add the incorrect answer to the list with objectId and type from the question prop
+            const incorrectAnswerData = {
+                objectId: question.id, // Now getting the ID from the question prop
+                type: "question", // Now getting the type from the question prop
+            };
+
+            this.setState(
+                { 
+                    resultText: 'Incorrect. Try again.', 
+                    incorrectAnswers: [...incorrectAnswers, incorrectAnswerData] 
+                }, 
+                this.saveQuizResults // Save the results after state update
+            );
+        }
     };
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.questionText}>{question.question}</Text>
-            
-            {question.answerMangas.map((answer) => (
-                <TouchableOpacity 
-                    key={answer.id} // Унікальний ключ
-                    style={[
-                        styles.answerButton,
-                        selectedAnswer === answer && styles.selectedButton,
-                        selectedAnswer === answer && (isCorrect ? styles.correctButton : styles.incorrectButton),
-                        question.correct_answer_romanized === answer.answer_romanji && styles.correctButton // Підсвітка правильної відповіді
-                    ]}
-                    onPress={() => handleAnswerSelect(answer)}
-                >
-                    <Text style={styles.answerText}>
-                        {answer.answer_hiragana_katakana || answer.answer_romanji}
-                    </Text>
-                </TouchableOpacity>
-            ))}
+    render() {
+        const { question } = this.props; // Get the question object from props
+        const { selectedAnswer, isButtonDisabled, resultText } = this.state;
 
-            {selectedAnswer && (
-                <Text style={[
-                    styles.resultText, 
-                    isCorrect ? styles.correctText : styles.incorrectText
-                ]}>
-                    {isCorrect ? 'Correct!' : 'Incorrect. Try again.'}
-                </Text>
-            )}
-        </View>
-    );
-};
+        return (
+            <View style={styles.container}>
+                <Text style={styles.questionText}>{question.question}</Text>
+                
+                {question.answerMangas.map((answer) => (
+                    <TouchableOpacity
+                        key={answer.id}
+                        style={[ 
+                            styles.answerButton, 
+                            isButtonDisabled && styles.disabledButton, 
+                            selectedAnswer === answer && (
+                                answer.answer_romanji === question.correct_answer_romanized ||
+                                answer.answer_hiragana_katakana === question.correct_answer_hiragana_or_katakana
+                            ) 
+                                ? styles.correctButton 
+                                : selectedAnswer === answer 
+                                ? styles.incorrectButton 
+                                : null,
+                        ]}
+                        onPress={() => this.handleAnswerSelect(answer)}
+                        disabled={isButtonDisabled}
+                    >
+                        <Text style={styles.answerText}>
+                            {answer.answer_hiragana_katakana || answer.answer_romanji}
+                        </Text>
+                    </TouchableOpacity>
+                ))}
+
+                {resultText && (
+                    <Text
+                        style={[
+                            styles.resultText,
+                            resultText === 'Correct!' ? styles.correctText : styles.incorrectText,
+                        ]}
+                    >
+                        {resultText}
+                    </Text>
+                )}
+            </View>
+        );
+    }
+}
 
 const styles = StyleSheet.create({
     container: {
@@ -71,9 +146,8 @@ const styles = StyleSheet.create({
         borderRadius: 6,
         marginVertical: 4,
     },
-    selectedButton: {
-        borderWidth: 2,
-        borderColor: '#007bff',
+    disabledButton: {
+        backgroundColor: '#d3d3d3',
     },
     correctButton: {
         backgroundColor: '#d4edda',
@@ -95,6 +169,12 @@ const styles = StyleSheet.create({
     },
     incorrectText: {
         color: '#dc3545',
+    },
+    scoreText: {
+        marginTop: 16,
+        textAlign: 'center',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
 

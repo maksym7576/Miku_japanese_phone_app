@@ -28,13 +28,15 @@ export default StyleSheet.create({
         shadowRadius: 4,
         shadowOffset: { width: 0, height: 2 },
         zIndex: 1,
-        alignSelf: 'center', // центрування бульбашки
-        width: '80%',
+        width: imageWidth / 2, // Встановлюємо ширину бульбашки рівною ширині фотографії
+        alignSelf: 'center',
+        marginBottom: 5,
     },
     bubbleText: {
-        fontSize: 16,
+        fontSize: 14,
         color: '#333',
-        textAlign: 'center',
+        textAlign: 'center', // Залишаємо вирівнювання по центру
+        flexWrap: 'wrap', // Дозволяємо тексту переноситися
     },
     arrow: {
         position: 'absolute',

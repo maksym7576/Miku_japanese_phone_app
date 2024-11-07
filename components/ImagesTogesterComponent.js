@@ -65,7 +65,7 @@ class ImagesTogethterComponent extends Component {
                         this.toggleLeftTranslation
                     )}
                     <Image
-                        source={{ uri: `data:image/jpeg;base64,${imageLeft.imageData}` }}
+                        source={{ uri: `data:image/jpeg;base64,${imageLeft.image.imageData}` }}
                         style={styles.image}
                     />
                 </View>
@@ -76,7 +76,7 @@ class ImagesTogethterComponent extends Component {
                         this.toggleRightTranslation
                     )}
                     <Image
-                        source={{ uri: `data:image/jpeg;base64,${imageRight.imageData}` }}
+                        source={{ uri: `data:image/jpeg;base64,${imageRight.image.imageData}` }}
                         style={styles.image}
                     />
                 </View>

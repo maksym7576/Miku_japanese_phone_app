@@ -9,7 +9,6 @@ const MainScreen = () => {
   
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ flexGrow: 1 }}>
-      <Text style={styles.welcomeText}>Welcome!</Text>
       <LessonsList navigation={navigation} />
     </ScrollView>
   );

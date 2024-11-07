@@ -89,12 +89,12 @@ class MangaScreen extends Component {
                 case 'image':
                     return (
                         <ImageComponent
-                            key={`image-${index}`}
-                            imageSource={`data:image/jpeg;base64,${item.content.imageData}`}
-                            dialogueText={item.content.mangaPhotoDescription.dialogue_hiragana_katakana}
-                            position={item.content.position}
-                        />
-                    );
+                        key={`image-${index}`}
+                        imageSource={`data:image/jpeg;base64,${item.content.image.imageData}`}
+                        photoDescription={item.content.mangaPhotoDescription}
+                        displayType={this.state.displayType}
+                    />
+                );
                     case 'images_together':
                         return (
                             <ImagesTogethterComponent
