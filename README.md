@@ -69,6 +69,6 @@ Follow these steps to install the app:
 
 ## Technologies Used
 
-- Frontend: React Native, JavaScript
+- Frontend: React Native, Expo, JavaScript
 - Backend: Java, Spring Boot
 - Database: MySQL
