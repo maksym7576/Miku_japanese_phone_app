@@ -52,7 +52,7 @@ class QuestionComponent extends Component {
 
         this.setState({ selectedAnswer: answer, isButtonDisabled: true });
 
-        const isCorrectAnswer = 
+        const isCorrectAnswer =
             answer.answer_romanji === question.correct_answer_romanized ||
             answer.answer_hiragana_katakana === question.correct_answer_hiragana_or_katakana;
 
@@ -65,7 +65,6 @@ class QuestionComponent extends Component {
                 this.saveQuizResults // Save the results after state update
             );
         } else {
-            // Add the incorrect answer to the list with objectId and type from the question prop
             const incorrectAnswerData = {
                 objectId: question.id, // Now getting the ID from the question prop
                 type: "question", // Now getting the type from the question prop
@@ -82,8 +81,17 @@ class QuestionComponent extends Component {
     };
 
     render() {
-        const { question } = this.props; // Get the question object from props
+        const { question, displayType } = this.props; // Get the question object and displayType from props
         const { selectedAnswer, isButtonDisabled, resultText } = this.state;
+
+        const getAnswerText = (answer) => {
+            const typeMap = {
+                original: answer.answer_hiragana_katakana || answer.answer_romanji,
+                hiragana: answer.answer_hiragana_katakana || '',
+                romanji: answer.answer_romanji || '',
+            };
+            return typeMap[displayType] || typeMap.original;
+        };
 
         return (
             <View style={styles.container}>
@@ -108,16 +116,16 @@ class QuestionComponent extends Component {
                         disabled={isButtonDisabled}
                     >
                         <Text style={styles.answerText}>
-                            {answer.answer_hiragana_katakana || answer.answer_romanji}
+                            {getAnswerText(answer)} {/* Dynamically render based on displayType */}
                         </Text>
                     </TouchableOpacity>
                 ))}
 
                 {resultText && (
                     <Text
-                        style={[
-                            styles.resultText,
-                            resultText === 'Correct!' ? styles.correctText : styles.incorrectText,
+                        style={[ 
+                            styles.resultText, 
+                            resultText === 'Correct!' ? styles.correctText : styles.incorrectText 
                         ]}
                     >
                         {resultText}
@@ -139,6 +147,7 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: 'bold',
         marginBottom: 12,
+        textAlign: 'center', // Center align the question text
     },
     answerButton: {
         backgroundColor: '#e0e0e0',

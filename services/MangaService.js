@@ -21,7 +21,7 @@ export const getMangaByIdSorted = async (id) => {
         throw new Error('Error fetching manga: ' + error.message);
     }
 };
-export const finishManga = async () => {
+export const finishManga = async (answersDTO) => {
     try {
         const response = await fetch(`${API_CONFIG.BASE_URL}/manga/finish`, {
             method: 'POST', 
