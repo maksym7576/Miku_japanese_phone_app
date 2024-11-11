@@ -1,54 +1,139 @@
-import React, { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Image, Text, TouchableOpacity } from 'react-native';
-import imageStyles from '../styles/imageStyles';
+import { Audio } from 'expo-av';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import styles from '../styles/imageStyles';
 
-class ImageComponent extends Component {
-    constructor(props) {
-        super(props);
-        this.state = {
-            isTranslationVisible: false,
-        };
+const ImageComponent = ({ imageSource, photoDescription, displayType, content }) => {
+  const [isTranslationVisible, setTranslationVisible] = useState(false);
+  const [isAudioPlaying, setAudioPlaying] = useState(false);
+  const [isAudioAvailable, setAudioAvailable] = useState(false);
+  const [sound, setSound] = useState(null);
+  const [imageError, setImageError] = useState(false);
+
+  useEffect(() => {
+    const { audio } = content;
+    if (audio?.audioData) {
+      setAudioAvailable(true);
     }
 
-    getDisplayText = (photoDescription = {}, type) => {
-        const typeMap = {
-            original: photoDescription.dialogue_hiragana_katakana_kanji || '',
-            hiragana: photoDescription.dialogue_hiragana_katakana || '',
-            romanji: photoDescription.dialogue_romanji || '',
-        };
-        
-        return typeMap[type] || typeMap.original;
+    const loadAudio = async () => {
+      if (audio?.audioData) {
+        await Audio.setAudioModeAsync({
+          playsInSilentModeIOS: true,
+          staysActiveInBackground: true,
+          shouldDuckAndroid: true,
+          playThroughEarpieceAndroid: false,
+        });
+      }
     };
 
-    toggleTranslation = () => {
-        this.setState(prevState => ({
-            isTranslationVisible: !prevState.isTranslationVisible,
-        }));
+    loadAudio();
+
+    return () => {
+      if (sound) {
+        sound.unloadAsync();
+      }
     };
+  }, [content]);
 
-    render() {
-        const { imageSource, photoDescription, displayType } = this.props;
-        const { isTranslationVisible } = this.state;
+  const getDisplayText = (photoDescription = {}, type) => {
+    const typeMap = {
+      original: photoDescription.dialogue_hiragana_katakana_kanji || '',
+      hiragana: photoDescription.dialogue_hiragana_katakana || '',
+      romanji: photoDescription.dialogue_romanji || '',
+    };
+    return typeMap[type] || typeMap.original;
+  };
 
-        return (
-            <View style={imageStyles.imageContainer}>
-                 <TouchableOpacity onPress={this.toggleTranslation} style={{ alignItems: 'center' }}>
-                    <View style={[imageStyles.bubble, { alignItems: 'center' }]}>
-                        <Text style={imageStyles.bubbleText}>
-                            {this.getDisplayText(photoDescription, displayType)}
-                        </Text>
-                        {isTranslationVisible && photoDescription?.translation && (
-                            <Text style={[imageStyles.bubbleText, { color: '#666', marginTop: 5 }]}>
-                                {photoDescription.translation}
-                            </Text>
-                        )}
-                        <View style={imageStyles.arrow} />
-                    </View>
-                </TouchableOpacity>
-                <Image source={{ uri: imageSource }} style={imageStyles.image} />
-            </View>
+  const toggleTranslation = () => {
+    setTranslationVisible(prev => !prev);
+  };
+
+  const playAudio = async () => {
+    try {
+      const { audio } = content;
+
+      if (isAudioPlaying && sound) {
+        await sound.stopAsync();
+        setAudioPlaying(false);
+        return;
+      }
+
+      if (sound) {
+        await sound.replayAsync();
+      } else {
+        const audioUrl = `data:audio/mp3;base64,${audio.audioData}`;
+        const { sound: newSound } = await Audio.Sound.createAsync(
+          { uri: audioUrl },
+          { shouldPlay: true }
         );
+
+        newSound.setOnPlaybackStatusUpdate(status => {
+          if (status.didJustFinish) {
+            setAudioPlaying(false);
+          }
+        });
+
+        setSound(newSound);
+      }
+
+      setAudioPlaying(true);
+    } catch (error) {
+      console.error('Error playing audio:', error);
     }
-}
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
+  };
+
+  return (
+    <View style={styles.imageContainer}>
+      <TouchableOpacity onPress={toggleTranslation} style={styles.bubbleContainer}>
+        <View style={styles.bubble}>
+          <Text style={styles.bubbleText}>
+            {getDisplayText(photoDescription, displayType)}
+          </Text>
+          {isTranslationVisible && photoDescription?.translation && (
+            <Text style={[styles.bubbleText, styles.translationText]}>
+              {photoDescription.translation}
+            </Text>
+          )}
+          <View style={styles.arrow} />
+        </View>
+      </TouchableOpacity>
+
+      <View style={styles.imageWrapper}>
+        <Image 
+          source={{ uri: imageSource }} 
+          style={styles.image}
+          onError={handleImageError}
+        />
+        
+        {isAudioAvailable && (
+          <TouchableOpacity 
+            onPress={playAudio} 
+            style={styles.soundButton}
+            activeOpacity={0.7}
+          >
+            <View style={styles.soundButtonBackground}>
+              <Ionicons
+                name={isAudioPlaying ? 'pause-circle' : 'play-circle'}
+                style={styles.soundIcon}
+              />
+            </View>
+          </TouchableOpacity>
+        )}
+
+        {imageError && (
+          <View style={styles.errorContainer}>
+            <Text style={styles.errorText}>Помилка завантаження зображення</Text>
+          </View>
+        )}
+      </View>
+    </View>
+  );
+};
 
 export default ImageComponent;

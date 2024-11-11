@@ -102,15 +102,20 @@ class MangaScreen extends Component {
                         <Text style={mainStyles.startDialogue}>{item.content.startDialogue}</Text>
                     </View>
                 );
-            case 'image':
-                return (
-                    <ImageComponent
+                case 'image':
+                    return (
+                      <ImageComponent
                         key={`image-${index}`}
                         imageSource={`data:image/jpeg;base64,${item.content.image.imageData}`}
                         photoDescription={item.content.mangaPhotoDescription}
                         displayType={this.state.displayType}
-                    />
-                );
+                        content={{
+                          image: item.content.image, // передаємо дані зображення
+                          audio: item.content.audio, // передаємо аудіо
+                        }}
+                      />
+                    );
+                  
             case 'images_together':
                 return (
                     <ImagesTogethterComponent
