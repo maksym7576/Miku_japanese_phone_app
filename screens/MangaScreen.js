@@ -31,27 +31,28 @@ class MangaScreen extends Component {
 
     handleFinish = async () => {
         try {
+            // Завантажуємо результати з AsyncStorage
             const userResponsesJson = await AsyncStorage.getItem('quizResults');
             const userDataJson = await AsyncStorage.getItem('userData');
-            const userResponses = userResponsesJson ? JSON.parse(userResponsesJson) : { correctAnswers: 0, incorrectAnswers: [] };
+    
+            // Якщо дані є в AsyncStorage, парсимо їх, якщо ні, то задаємо дефолтні значення
+            const userResponses = userResponsesJson ? JSON.parse(userResponsesJson) : {  answerHistory: [] };
             const userData = userDataJson ? JSON.parse(userDataJson) : {};
-            const mangaId = this.state.mangaId;
+            const mangaId = this.state.mangaId; // Маємо ID манги
     
-            const answersDTO = {
-                numCorrectAnswers: userResponses.correctAnswers,
-                userIncorrectAnswersList: userResponses.incorrectAnswers.map(answer => ({
-                    objectId: answer.objectId,
-                    type: answer.type,
-                })),
-                userId: userData.id,
-                mangaId: mangaId,
-            };
+            // Формуємо об'єкт для відправки на сервер
+            const answersDTO = userResponses.answerHistory.map(answer => ({
+                answerId: answer.answerId,  // Відповідь
+                type: answer.type,          // Тип питання
+                isCorrect: answer.isCorrect, // Правильність відповіді
+            }));
     
+            // Відправляємо на сервер
             console.log("Submitting answers:", answersDTO);
-            const response = await finishManga(answersDTO);
+            const response = await finishManga(answersDTO, userData.id, mangaId);
             console.log("Response data:", response);
     
-            // Ensure the response is valid before updating state
+            // Якщо відповідь валідна, оновлюємо стан з результатами уроку
             if (Array.isArray(response) && response.length > 0) {
                 this.setState({ lessonResults: response, showLessonResults: true });
             } else {
@@ -62,6 +63,8 @@ class MangaScreen extends Component {
             console.error("Error in handleFinish:", error);
         }
     };
+    
+    
     
     
     displayTypes = ['original', 'hiragana', 'romanji'];
@@ -125,11 +128,14 @@ class MangaScreen extends Component {
                     />
                 );
             case 'question':
+                const questionType = 'question';
                 return (
                     <QuestionComponent 
                         key={`question-${index}`} 
-                        question={item.content} 
+                        question={item.content.question} 
+                        answerList={item.content.answerList} 
                         displayType={this.state.displayType} 
+                        type={questionType}
                     />
                 );
             default:

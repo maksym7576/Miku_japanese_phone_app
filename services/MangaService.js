@@ -21,9 +21,9 @@ export const getMangaByIdSorted = async (id) => {
         throw new Error('Error fetching manga: ' + error.message);
     }
 };
-export const finishManga = async (answersDTO) => {
+export const finishManga = async (answersDTO, userId, mangaId) => {
     try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}/manga/finish`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/manga/finish?userId=${userId}&mangaId=${mangaId}`, {
             method: 'POST', 
             headers: {
                 'Accept': 'application/json',
@@ -31,15 +31,16 @@ export const finishManga = async (answersDTO) => {
             },
             body: JSON.stringify(answersDTO) 
         });
+
         if (!response.ok) {
-            throw new Error('Error finishing manga'); 
+            throw new Error('Error finishing manga');
         }
 
-        const data = await response.json(); 
-        return data; 
+        const data = await response.json();
+        return data;
 
     } catch (error) {
-        console.error('Server error:', error); 
-        throw error; 
+        console.error('Server error:', error);
+        throw error;
     }
 };

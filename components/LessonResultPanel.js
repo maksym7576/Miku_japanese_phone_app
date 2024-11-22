@@ -1,21 +1,20 @@
 import React, { useState } from 'react';
 import { View, Text, Image, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; // імпортуємо useNavigation
-import AsyncStorage from '@react-native-async-storage/async-storage'; // імпортуємо AsyncStorage
+import { useNavigation } from '@react-navigation/native'; 
+import AsyncStorage from '@react-native-async-storage/async-storage'; 
 
 const LessonResultPanel = ({ results, onClose }) => {
     const [selectedItem, setSelectedItem] = useState(null);
-    const navigation = useNavigation(); // створюємо змінну для навігації
+    const navigation = useNavigation();
 
     const handleImagePress = (item) => {
         setSelectedItem(selectedItem === item ? null : item);
     };
 
-    // асинхронна функція для навігації на сторінку Lessons
     const navigateToLessons = async () => {
         try {
-            await AsyncStorage.removeItem('quizResults'); // видаляємо результати з AsyncStorage
-            navigation.navigate('Lessons'); // переходимо на сторінку Lessons
+            await AsyncStorage.removeItem('quizResults'); 
+            navigation.navigate('Lessons'); 
         } catch (error) {
             Alert.alert('Error', 'Failed to remove quiz results');
         }
@@ -29,7 +28,6 @@ const LessonResultPanel = ({ results, onClose }) => {
                 {results && results.length > 0 ? (
                     results.map((result, index) => (
                         <View key={index} style={styles.resultItem}>
-                            {/* Прогрес-бар з відсотком */}
                             {result.type === 'Percentage' && (
                                 <View style={styles.progressContainer}>
                                     <View style={[styles.progressBar, { width: `${result.reward}%` }]} />
@@ -38,12 +36,10 @@ const LessonResultPanel = ({ results, onClose }) => {
                                 </View>
                             )}
                             
-                            {/* Інформація про досвід (Experience) */}
                             {result.type === 'Experience' && (
                                 <Text style={styles.rewardValue}>Reward: {result.reward} XP</Text>
                             )}
                             
-                            {/* Кругле зображення, яке можна натискати */}
                             {result.type === 'Item' && result.reward && (
                                 <TouchableOpacity onPress={() => handleImagePress(result)}>
                                     <Image
@@ -54,7 +50,6 @@ const LessonResultPanel = ({ results, onClose }) => {
                                 </TouchableOpacity>
                             )}
 
-                            {/* Додаткова інформація про об'єкт при натисканні */}
                             {selectedItem === result && result.reward && (
                                 <View style={styles.itemDetails}>
                                     <Text style={styles.itemName}>{result.reward.name}</Text>
@@ -68,7 +63,6 @@ const LessonResultPanel = ({ results, onClose }) => {
                     <Text style={styles.noResults}>No results available.</Text>
                 )}
 
-                {/* Кнопка для переходу на сторінку Lessons */}
                 <TouchableOpacity onPress={navigateToLessons} style={styles.closeButton}>
                     <Text style={styles.closeButtonText}>Go to Lessons</Text>
                 </TouchableOpacity>

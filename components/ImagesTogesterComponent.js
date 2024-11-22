@@ -66,9 +66,9 @@ class ImagesTogethterComponent extends Component {
 
   getDisplayText = (photoDescription, type) => {
     const typeMap = {
-      'original': photoDescription.dialogue_hiragana_katakana_kanji,
-      'hiragana': photoDescription.dialogue_hiragana_katakana,
-      'romanji': photoDescription.dialogue_romanji
+      'original': photoDescription.kanji,
+      'hiragana': photoDescription.hiragana_or_katakana,
+      'romanji': photoDescription.romanji
     };
     return typeMap[type] || typeMap['original'];
   };
