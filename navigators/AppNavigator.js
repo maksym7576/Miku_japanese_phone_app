@@ -9,6 +9,7 @@ import MikuScreen from '../screens/MikuScreen';
 import ShopScreen from '../screens/ShopScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import MangaScreen from '../screens/MangaScreen';
+import ExerciseScreen from '../screens/ExerciseScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -42,6 +43,7 @@ const AppNavigator = () => {
       <Stack.Screen name="LessonDetail" component={LessonDetailScreen} />
       <Stack.Screen name="logout" component={AuthScreen} options={{ headerShown: false }} />
       <Stack.Screen name="manga" component={MangaScreen}/>
+      <Stack.Screen name="exercise" component={ExerciseScreen}/>
     </Stack.Navigator>
   );
 };
