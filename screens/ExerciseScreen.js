@@ -5,6 +5,7 @@ import { ProgressBar, ScrollView } from 'react-native';
 import { Audio } from 'expo-av';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
+import QuestionComponent from '../components/QuestionComponent';
 
 class ExerciseScreen extends Component {
     constructor(props) {
@@ -182,26 +183,57 @@ class ExerciseScreen extends Component {
                         <Text style={styles.translation_flash_card}>{currentContent.content.object.translation}</Text>
                         </View>
                     );
+                case 'question':
+                        const questionType = 'question';
+                        return (
+                            <View style={styles.centeredContainer}>
+                            <View style={styles.imageContainer}>
+                            <Image
+                                source={{ uri: `data:image/jpeg;base64,${currentContent.content.image.imageData}` }}
+                                style={styles.image}
+                            />
+                            </View>
+                            <QuestionComponent 
+                                question={currentContent.content.question} 
+                                answerList={currentContent.content.answerList} 
+                                displayType={this.state.displayType} 
+                                type={questionType}
+                            />
+                            </View>
+                        );
                 default:
                     return null;
         }
     };
 
+    handleFinish = () => {
+        // Logic to handle finishing the exercise
+        console.log("Exercise Finished!");
+        // You can navigate to another screen or show a modal, etc.
+    };
+
     render() {
         const { contentList, currentIndex } = this.state;
         const isLastContent = currentIndex === contentList.length - 1;
+    
         return (
             <View style={styles.container}>
                 <View style={styles.content}>{this.renderContent()}</View>
                 {this.state.displayedContent.map((item, index) => this.renderContent(item, index))}
-
-                {this.state.contentList.length > 0 ? (
-                    <TouchableOpacity onPress={this.handleNextContent} style={styles.button}>Next</TouchableOpacity>
-                ) : (
-                    <TouchableOpacity>Finish</TouchableOpacity>
-                )}
+    
+                {contentList.length > 0 ? (
+                    isLastContent ? (
+                        <TouchableOpacity onPress={this.handleFinish} style={styles.button}>
+                            Finish
+                        </TouchableOpacity>
+                    ) : (
+                        <TouchableOpacity onPress={this.handleNextContent} style={styles.button}>
+                            Next
+                        </TouchableOpacity>
+                    )
+                ) : null}
             </View>
-        )
+        );
     }
 }
 
@@ -372,6 +404,13 @@ class ExerciseScreen extends Component {
         progressBar: {
             height: '100%',
             backgroundColor: '#4caf50',
+        },
+        centeredContainer: {
+            flex: 1,                     // Займає весь доступний простір
+            justifyContent: 'flex-start', // Розташовує контент зверху
+            alignItems: 'center',        // Центрує по горизонталі            
+            paddingHorizontal: 10,       // Відступи по боках
+            backgroundColor: 'transparent', // Прозорий фон контейнера
         },
     })
 
