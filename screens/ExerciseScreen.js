@@ -4,6 +4,7 @@ import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { ProgressBar, ScrollView } from 'react-native';
 import { Audio } from 'expo-av';
 import * as Font from 'expo-font';
+import { Ionicons } from '@expo/vector-icons';
 
 class ExerciseScreen extends Component {
     constructor(props) {
@@ -21,6 +22,7 @@ class ExerciseScreen extends Component {
             sound: null,
             isPlating: false,
             progress: 0,
+            hasPlayedAudio: false,
         };
     }
 
@@ -51,7 +53,7 @@ class ExerciseScreen extends Component {
         this.setState((prevState) => {
             const nextindex = prevState.currentIndex + 1;
             if(nextindex < prevState.contentList.length) {
-                return { currentIndex: nextindex };
+                return { currentIndex: nextindex, hasPlayedAudio: false};
             }
             return { currentIndex: prevState.currentIndex };
         });
@@ -75,9 +77,13 @@ class ExerciseScreen extends Component {
             this.setState({ sound, isPlating: true });
 
             sound.setOnPlaybackStatusUpdate((status) => {
-                if(status.isLoaded && status.isPlaying ) {
-                    const progress = (status.positionMillis / status.durationMillis) * 100;
-                    this.setState({ progress });
+                if (status.isLoaded) {
+                    if (status.isPlaying) {
+                        const progress = (status.positionMillis / status.durationMillis) * 100;
+                        this.setState({ progress });
+                    } else if (status.didJustFinish) {
+                        this.setState({ progress: 100, isPlating: false });
+                    }
                 }
             });
 
@@ -96,8 +102,19 @@ class ExerciseScreen extends Component {
     
 
     renderContent = () => {
-        const { contentList, currentIndex, progress, isPlating } = this.state;
+        const { contentList, currentIndex, progress, isPlating, hasPlayedAudio} = this.state;
         const currentContent = contentList[currentIndex];
+
+        if (
+            currentContent &&
+            currentContent.type === 'flash_card_popup' &&
+            !hasPlayedAudio
+        ) {
+            setTimeout(() => {
+            this.playAudio(currentContent.content.audio.audioData);
+            this.setState({ hasPlayedAudio: true }); // Встановити прапорець
+            }, 500);
+        }
         switch (currentContent.type) {
             case 'details':
                 return (
@@ -134,25 +151,37 @@ class ExerciseScreen extends Component {
                         ))}
                     </View>
                 );  
-            case 'flash_card_popup':
-                return (
-                    <View style={styles.imageContainer}>
-                    <Image
-                        source={{ uri: `data:image/jpeg;base64,${currentContent.content.image.imageData}` }}
-                        style={styles.image}
-                    />
-                    <View style={styles.progressOverlay}>
-                        <View style={[styles.progressBar, { width: `${progress}%` }]} />
-                    </View>
-                    <TouchableOpacity
-                        style={[styles.stopButton, { backgroundColor: isPlating ? '#ff5252' : '#4caf50' }]}
-                        onPress={isPlating ? this.stopAudio : () => this.playAudio(currentContent.content.audio.audioData)}
-                    >
-                        <Text style={styles.stopButtonText}>{isPlating ? 'Stop' : 'Play'}</Text>
-                    </TouchableOpacity>
-                </View>
-                
-                );
+                case 'flash_card_popup':
+                    return (
+                        <View>
+                        <View style={styles.imageContainer}>
+                            <Image
+                                source={{ uri: `data:image/jpeg;base64,${currentContent.content.image.imageData}` }}
+                                style={styles.image}
+                            />
+                            <View style={styles.audioContainer}>
+                                <TouchableOpacity
+                                    onPress={
+                                        isPlating
+                                            ? this.stopAudio
+                                            : () => this.playAudio(currentContent.content.audio.audioData)
+                                    }
+                                >
+                                <Ionicons
+                                name={isPlating ? 'stop-circle-outline' : 'play-circle-outline'}
+                                size={50}
+                                color="#fff"
+                                />
+                                </TouchableOpacity>
+                                <View style={styles.progressOverlay}>
+                                    <View style={[styles.progressBar, { width: `${progress}%` }]} />
+                                </View>
+                            </View>
+                        </View>
+                        <Text style={styles.title_flash_card}>{currentContent.content.object.romanji_word}/{currentContent.content.object.hiragana_or_katakana}/{currentContent.content.object.kanji_word}</Text>
+                        <Text style={styles.translation_flash_card}>{currentContent.content.object.translation}</Text>
+                        </View>
+                    );
                 default:
                     return null;
         }
@@ -203,6 +232,21 @@ class ExerciseScreen extends Component {
             textAlign: 'center',
             color: '#333',
         },
+        title_flash_card: {
+            fontSize: 21,
+            fontWeight: 'bold',
+            marginBottom: 10,
+            textAlign: 'left',
+            color: '#333',
+        },
+        translation_flash_card: {
+            fontSize: 18,
+            fontWeight: 'bold',
+            marginBottom: 10,
+            textAlign: 'left',
+            color: '#333',                   
+            opacity: 0.6,
+        },
         description: {
             fontSize: 16,
             textAlign: 'center',
@@ -240,22 +284,6 @@ class ExerciseScreen extends Component {
         alightItems: 'center',
         margin: 10,
     },
-    progressOverlay: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        height: 5,
-        backgroundColor: 'rgba(0,0,0,0.3)',
-    },
-    progressBar: {
-        height: '100%',
-        backgroundColor: '#4caf50',
-    },
-    progress: {
-        height: '100%',
-        backgroundColor: '#4caf50',
-    },
         buttonText: {
             color: '#fff',
             frontSize: 16,
@@ -285,34 +313,65 @@ class ExerciseScreen extends Component {
             frontWeight: 'bold',
             color: '#333',
         },
-        image: {
-            width: '100%',
-            height: 'auto',
-        },
-        audioContainer: {
-            flexDirection: 'row',
-            alignItems: 'stretch',
-            marginVertical: 20,
+        stopButtonText: {
+            color: '#fff',
+            fontSize: 18,
+            fontWeight: 'bold',
         },
         imageContainer: {
-            flex: 1,
-        position: 'relative',
+            width: '100%',
+            aspectRatio: 16 / 9, // Фіксує співвідношення 16:9
+            justifyContent: 'center',
+            alignItems: 'center',
+            position: 'relative',
+            backgroundColor: '#ddd', // Запасний фон на випадок відсутності зображення
+            marginBottom: 20, // Відступи між зображенням та іншими елементами
         },
+        // Стиль для зображення
+        image: {
+            width: '100%',
+            height: '100%',
+            resizeMode: 'cover', // Зображення займає весь простір, зберігаючи пропорції
+        },
+        // Контейнер для аудіо та кнопок
+        audioContainer: {
+            position: 'absolute',
+            bottom: 10, // Розміщення елементів у нижній частині контейнера
+            left: 0,
+            right: 0,
+            alignItems: 'center',
+        },
+        // Кнопка відтворення/зупинки
         stopButton: {
             position: 'absolute',
-            left: 10,  // Кнопка зліва від зображення
-            top: '50%',  // Центруємо по вертикалі
-            transform: [{ translateY: -20 }], // Трошки зміщуємо для центрованості
-            width: 40,
-            height: 40,
-            backgroundColor: '#ff5252',
+            left: 10, // Розташування кнопки зліва
+            bottom: 10, // Відступ знизу
+            width: 60,
+            height: 60,
             justifyContent: 'center',
-            borderRadius: 10,
+            alignItems: 'center',
+            borderRadius: 30, // Кругла форма кнопки
+            backgroundColor: '#ff5252',
         },
         stopButtonText: {
             color: '#fff',
-            frontSize: 18,
-            frontWeight: 'bold',
+            fontSize: 16,
+            fontWeight: 'bold',
+        },
+        // Прогрес-бар
+        progressOverlay: {
+            width: '100%',
+            height: 8,
+            backgroundColor: 'rgba(0, 0, 0, 0.3)',
+            borderRadius: 4,
+            overflow: 'hidden',
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+        },
+        progressBar: {
+            height: '100%',
+            backgroundColor: '#4caf50',
         },
     })
 
