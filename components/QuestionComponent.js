@@ -71,7 +71,6 @@ class QuestionComponent extends Component {
 
         this.setState(
             { 
-                resultText: isCorrectAnswer ? 'Correct!' : 'Incorrect. Try again.',
                 modalMessage: `Correct answer: ${correctAnswerText}`, 
                 answerHistory: [...answerHistory, answerRecord],
                 showModal: true, // Показуємо модальне вікно

@@ -53,6 +53,7 @@ class ExerciseScreen extends Component {
     handleNextContent = () => {
         this.setState((prevState) => {
             const nextindex = prevState.currentIndex + 1;
+            this.setState({ progress: 0 });
             if(nextindex < prevState.contentList.length) {
                 return { currentIndex: nextindex, hasPlayedAudio: false};
             }
@@ -71,6 +72,8 @@ class ExerciseScreen extends Component {
             if (this.state.sound) {
                 await this.state.sound.unloadAsync();
             }
+
+            this.setState({ progress: 0 });
 
             const sound = new Audio.Sound();
             const audioUri = `data:audio/mp3;base64,${audioData}`;
@@ -121,14 +124,18 @@ class ExerciseScreen extends Component {
                 return (
                     <View>
                         <Text style={styles.title}>{currentContent.content.name}</Text>
+                        <View style={styles.containerPhrase}>
                         <Text style={styles.description}>{currentContent.content.startDialogue}</Text>
+                        </View>
                     </View>
                 );
             case 'explanation_with_table':
                 return (
                     <View>
                         <Text style={styles.title}>{currentContent.content.guidance.topic}</Text>
+                        <View style={styles.containerPhrase}>
                         <Text style={styles.description}>{currentContent.content.guidance.description}</Text>
+                        </View>
                         {currentContent.content.tableDTOList.map((tableItem, index) => (
                             <View key={index} style={styles.tableItemContainer}>
                                  <Text style={styles.tableItemName}>{tableItem.dynamicRow.tableName}</Text>
@@ -201,6 +208,33 @@ class ExerciseScreen extends Component {
                             />
                             </View>
                         );
+                case 'explanation_with_phrases':
+                    return (
+                        <View>
+                            <Text style={styles.title}>{currentContent.content.guidance.topic}</Text>
+                            <View style={styles.containerPhrase}>
+                            <Text style={styles.description}>{currentContent.content.guidance.description}</Text>
+                            </View>
+                            {currentContent.content.phrasesTableDTOList.map((tableItem, index) => (
+                                <View  key={index} style={styles.tableItemContainer}>
+                                    <Text style={styles.tableItemName}>{tableItem.dynamicRow.tableName}</Text>
+                                    {tableItem.textList.map((tableWord, wordIndex) => (
+                               <ScrollView>
+                               <View key={wordIndex} style={styles.containerPhrase}>
+                               <View style={styles.phraseContainer}>
+                                <Text style={styles.textKanji}>{tableWord.kanji}</Text>
+                                <Text style={styles.textHiragana}>{tableWord.hiragana_or_katakana}{' -> '}{tableWord.translation}</Text>
+                                <View style={styles.translationContainer}>
+                                    <Text style={styles.textRomanji}>{tableWord.romanji}</Text>
+                                </View>
+                                </View>
+                               </View>
+                           </ScrollView>
+                                     ))}
+                                </View>
+                            ))}
+                        </View>
+                    );        
                 default:
                     return null;
         }
@@ -281,7 +315,6 @@ class ExerciseScreen extends Component {
         },
         description: {
             fontSize: 16,
-            textAlign: 'center',
             color: '#555'
         },
         tableItemContainer: {
@@ -412,6 +445,34 @@ class ExerciseScreen extends Component {
             paddingHorizontal: 10,       // Відступи по боках
             backgroundColor: 'transparent', // Прозорий фон контейнера
         },
+          textHiragana: {
+            fontSize: 14, // Prominent size
+            color: '#000', // Dark, clear color
+            fontWeight: '600', // Bold to draw attention
+            opacity: 1, // Full opacity
+          },
+          textKanji: {
+            fontSize: 12, // Smaller than hiragana
+            color: '#666', // Less prominent color
+            opacity: 0.7, // Slightly transparent
+          },
+          textRomanji: {
+            fontSize: 12, // Same size as kanji
+            color: '#666', // Less prominent color
+            opacity: 0.7, // Slightly transparent
+            fontStyle: 'italic',
+          },
+          translationContainer: {
+            flexDirection: 'row', // Inline with hiragana/katakana
+            alignItems: 'center',
+          },
+          phraseContainer: {
+            marginBottom: 10, // Space between phrases
+            padding: 5,
+          },
+          containerPhrase: {
+            alignItems: 'center',
+          },
     })
 
 export default ExerciseScreen;
