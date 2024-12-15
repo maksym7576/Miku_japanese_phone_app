@@ -1,11 +1,13 @@
 import React, { Component } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ProgressBar, ScrollView } from 'react-native';
-import { Audio } from 'expo-av';
+import { ProgressBar } from 'react-native';
+import { Audio, Video } from 'expo-av';
 import * as Font from 'expo-font';
 import { Ionicons } from '@expo/vector-icons';
 import QuestionComponent from '../components/QuestionComponent';
+import MediaComponent from '../components/MediaComponent';
+import ColocateExerciseComponent from '../components/ColocateExerciceComponent';
 
 class ExerciseScreen extends Component {
     constructor(props) {
@@ -40,7 +42,7 @@ class ExerciseScreen extends Component {
         this.setState({ fontsLoaded: true });
     }
 
-    displayTypes = ['original', 'katakana-hiragana', 'hiragana-ronamji'];
+    displayTypes = ['kanji', 'hiragana', 'ronamji'];
 
     // toggleDisplayType = () => {
     //     this.setState((prevState) => {
@@ -67,42 +69,42 @@ class ExerciseScreen extends Component {
         }
     }
 
-    playAudio = async (audioData) => {
-        try {
-            if (this.state.sound) {
-                await this.state.sound.unloadAsync();
+    handleVideoPlaybackStatusUpdate = (status) => {
+        if (status.isLoaded) {
+            const progress = (status.positionMillis / status.durationMillis) * 100;
+            this.setState({ videoProgress: progress });
+            if (status.didJustFinish) {
+                this.setState({ isPlating: false, videoProgress: 0 });  // Коли відео завершується, зупиняємо його
             }
+        }
+    };
 
-            this.setState({ progress: 0 });
-
-            const sound = new Audio.Sound();
-            const audioUri = `data:audio/mp3;base64,${audioData}`;
-            await sound.loadAsync({ uri: audioUri });
-            this.setState({ sound, isPlating: true });
-
-            sound.setOnPlaybackStatusUpdate((status) => {
-                if (status.isLoaded) {
-                    if (status.isPlaying) {
-                        const progress = (status.positionMillis / status.durationMillis) * 100;
-                        this.setState({ progress });
-                    } else if (status.didJustFinish) {
-                        this.setState({ progress: 100, isPlating: false });
-                    }
-                }
-            });
-
-            await sound.playAsync();
+    playVideo = async () => {
+        try {
+            this.setState({ videoProgress: 0, isPlating: true });  // Оновлюємо стан для відео
+            if (this.videoRef) {
+                await this.videoRef.stopAsync();  // Зупиняємо відео
+                await this.videoRef.setPositionAsync(0);  // Встановлюємо позицію на початок
+                await this.videoRef.playAsync();  // Починаємо відтворення
+            }
         } catch (error) {
-            console.error("Error playing audio:", error);
+            console.error("Error playing video:", error);
+        }
+    };
+    
+    stopVideo = async () => {
+        try {
+            if (this.videoRef) {
+                await this.videoRef.pauseAsync();  // Пауза відео
+                await this.videoRef.setPositionAsync(0);  // Встановлюємо позицію на початок
+                this.setState({ isPlating: false, videoProgress: 0 });  // Оновлюємо стан, щоб зупинити відео
+            }
+        } catch (error) {
+            console.error("Error stopping video:", error);
         }
     };
 
-    stopAudio = async () => {
-        if(this.state.sound) {
-            await this.state.sound.stopAsync(); 
-            this.setState({ isPlating: false, progress: 0 });
-        }
-    };
+    
     
 
     renderContent = () => {
@@ -115,7 +117,20 @@ class ExerciseScreen extends Component {
             !hasPlayedAudio
         ) {
             setTimeout(() => {
-            this.playAudio(currentContent.content.audio.audioData);
+            {currentContent.content.fileRecordsList.map((fileRecord, index) => {
+            if (fileRecord.type === "audio") {
+            this.playAudio(fileRecord.url);
+            }})}
+            this.setState({ hasPlayedAudio: true }); // Встановити прапорець
+            }, 500);
+        }
+        if (
+            currentContent &&
+            currentContent.type === 'explanation_with_phrases' &&
+            !hasPlayedAudio
+        ) {
+            setTimeout(() => {
+            this.playVideo();
             this.setState({ hasPlayedAudio: true }); // Встановити прапорець
             }, 500);
         }
@@ -129,7 +144,7 @@ class ExerciseScreen extends Component {
                         </View>
                     </View>
                 );
-            case 'explanation_with_table':
+            case 'explanation':
                 return (
                     <View>
                         <Text style={styles.title}>{currentContent.content.guidance.topic}</Text>
@@ -139,6 +154,7 @@ class ExerciseScreen extends Component {
                         {currentContent.content.tableDTOList.map((tableItem, index) => (
                             <View key={index} style={styles.tableItemContainer}>
                                  <Text style={styles.tableItemName}>{tableItem.dynamicRow.tableName}</Text>
+                                 {tableItem.type === "VOCABULARY" ?  (
                                  <View style={styles.table}>
                                     <View style={[styles.row, styles.headerRow]}>
                                     <Text style={[styles.cell, styles.headerCell]}>Katakana</Text>
@@ -146,7 +162,7 @@ class ExerciseScreen extends Component {
                                     <Text style={[styles.cell, styles.headerCell]}>Romanji</Text>
                                     <Text style={[styles.cell, styles.headerCell]}>Translation</Text>
                                     </View>
-                                 {tableItem.vocabularyList.map((tableWord, wordIndex) => (
+                                 {tableItem.textList.map((tableWord, wordIndex) => (
                                     <View key={wordIndex} style={styles.row}>
                                         <Text style={styles.cell}>{tableWord.kanji_word}</Text>
                                         <Text style={styles.cell}>{tableWord.hiragana_or_katakana}</Text>
@@ -155,86 +171,58 @@ class ExerciseScreen extends Component {
                                     </View>
                                  ))}
                                  </View>
+                                   ) : (
+                                    <View>
+                                    {tableItem.textList.map((tableWord, wordIndex) => (
+                                        <View key={wordIndex} style={styles.containerPhrase}>
+                                        <View style={styles.phraseContainer}>
+                                            <Text style={styles.textKanji}>{tableWord.kanji_word}</Text>
+                                            <Text style={styles.textHiragana}>
+                                            {tableWord.hiragana_or_katakana}{' -> '}{tableWord.translation}
+                                            </Text>
+                                            <View style={styles.translationContainer}>
+                                            <Text style={styles.textRomanji}>{tableWord.romanji_word}</Text>
+                                            </View>
+                                        </View>
+                                        </View>
+                                    ))}
+                                    </View>
+                                   )}
                             </View>
                         ))}
                     </View>
                 );  
                 case 'flash_card_popup':
                     return (
-                        <View>
-                        <View style={styles.imageContainer}>
-                            <Image
-                                source={{ uri: `data:image/jpeg;base64,${currentContent.content.image.imageData}` }}
-                                style={styles.image}
-                            />
-                            <View style={styles.audioContainer}>
-                                <TouchableOpacity
-                                    onPress={
-                                        isPlating
-                                            ? this.stopAudio
-                                            : () => this.playAudio(currentContent.content.audio.audioData)
-                                    }
-                                >
-                                <Ionicons
-                                name={isPlating ? 'stop-circle-outline' : 'play-circle-outline'}
-                                size={50}
-                                color="#fff"
-                                />
-                                </TouchableOpacity>
-                                <View style={styles.progressOverlay}>
-                                    <View style={[styles.progressBar, { width: `${progress}%` }]} />
-                                </View>
-                            </View>
-                        </View>
-                        <Text style={styles.title_flash_card}>{currentContent.content.object.romanji_word}/{currentContent.content.object.hiragana_or_katakana}/{currentContent.content.object.kanji_word}</Text>
-                        <Text style={styles.translation_flash_card}>{currentContent.content.object.translation}</Text>
-                        </View>
-                    );
+                    <View>
+                        <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList}/>
+                <Text style={styles.title_flash_card}>
+                    {currentContent.content.object.textDTO.romanji_word}/{currentContent.content.object.textDTO.hiragana_or_katakana}/{currentContent.content.object.textDTO.kanji_word}
+                </Text>
+                <Text style={styles.translation_flash_card}>{currentContent.content.object.textDTO.translation}</Text>
+                </View>
+                 );
                 case 'question':
-                        const questionType = 'question';
                         return (
                             <View style={styles.centeredContainer}>
-                            <View style={styles.imageContainer}>
-                            <Image
-                                source={{ uri: `data:image/jpeg;base64,${currentContent.content.image.imageData}` }}
-                                style={styles.image}
+                            <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList}
                             />
-                            </View>
                             <QuestionComponent 
-                                question={currentContent.content.question} 
-                                answerList={currentContent.content.answerList} 
-                                displayType={this.state.displayType} 
-                                type={questionType}
-                            />
+                                question={currentContent.content.object.question}
+                                answers={currentContent.content.object.answer}
+                                />
                             </View>
                         );
-                case 'explanation_with_phrases':
-                    return (
-                        <View>
-                            <Text style={styles.title}>{currentContent.content.guidance.topic}</Text>
-                            <View style={styles.containerPhrase}>
-                            <Text style={styles.description}>{currentContent.content.guidance.description}</Text>
+                    case 'exercise_colocate':
+                        return (
+                            <View style={styles.centeredContainer}>
+                                 <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList}/>єє
+                                <ColocateExerciseComponent
+                                 content={currentContent.content}
+                                 displayMode="hiragana"
+                                />
                             </View>
-                            {currentContent.content.phrasesTableDTOList.map((tableItem, index) => (
-                                <View  key={index} style={styles.tableItemContainer}>
-                                    <Text style={styles.tableItemName}>{tableItem.dynamicRow.tableName}</Text>
-                                    {tableItem.textList.map((tableWord, wordIndex) => (
-                               <ScrollView>
-                               <View key={wordIndex} style={styles.containerPhrase}>
-                               <View style={styles.phraseContainer}>
-                                <Text style={styles.textKanji}>{tableWord.kanji}</Text>
-                                <Text style={styles.textHiragana}>{tableWord.hiragana_or_katakana}{' -> '}{tableWord.translation}</Text>
-                                <View style={styles.translationContainer}>
-                                    <Text style={styles.textRomanji}>{tableWord.romanji}</Text>
-                                </View>
-                                </View>
-                               </View>
-                           </ScrollView>
-                                     ))}
-                                </View>
-                            ))}
-                        </View>
-                    );        
+                        );
                 default:
                     return null;
         }
@@ -258,11 +246,11 @@ class ExerciseScreen extends Component {
                 {contentList.length > 0 ? (
                     isLastContent ? (
                         <TouchableOpacity onPress={this.handleFinish} style={styles.button}>
-                            Finish
+                            <Text style={styles.buttonText}>Finish</Text>
                         </TouchableOpacity>
                     ) : (
                         <TouchableOpacity onPress={this.handleNextContent} style={styles.button}>
-                            Next
+                            <Text style={styles.buttonText}>Next</Text>
                         </TouchableOpacity>
                     )
                 ) : null}
@@ -473,6 +461,33 @@ class ExerciseScreen extends Component {
           containerPhrase: {
             alignItems: 'center',
           },
+          videoContainer: {
+            width: '100%', // Контейнер розтягується на ширину екрану
+            height: 'auto', // Висота буде автоматичною
+            aspectRatio: 16 / 9, // Підтримує пропорції 16:9
+            backgroundColor: 'black', // Колір фону для контейнера
+            justifyContent: 'center',
+            alignItems: 'center',
+            overflow: 'hidden', // Запобігає виступанню відео за межі контейнера
+          },
+          video: {
+            width: '100%', // Ширина відео розтягується по контейнеру
+            height: '100%', // Висота відео буде відповідати контейнеру
+            objectFit: 'contain', // Для браузера: підтримує пропорції без обрізання
+          },
+          buttonText: {
+            position: 'absolute', // Абсолютне позиціонування
+            bottom: 0, // Прикріплення до самого низу
+            left: 0, // Від лівого краю
+            right: 0, // До правого краю
+            fontSize: 21, // Розмір шрифту
+            fontFamily: 'Parkinsans-Regular',
+            textAlign: 'center', // Центрування по горизонталі
+            backgroundColor: '#007AFF', // Колір фону (опціонально)
+            color: '#ffffff', // Колір тексту
+            paddingVertical: 10, // Вертикальний внутрішній відступ
+            paddingHorizontal: 10 // Горизонтальний внутрішній відступ
+          }
     })
 
 export default ExerciseScreen;

@@ -2,7 +2,7 @@ import { API_CONFIG } from '../config';
 
 export const getExerciseData = async (lessonId) => {
     try {
-        const responce = await fetch(`${API_CONFIG.BASE_URL}/exercise/structured/${lessonId}`, {
+        const responce = await fetch(`${API_CONFIG.BASE_URL}/exercise/structured/${lessonId}/test`, {
             headers: {
                 'Accept': 'application/json'
             }
