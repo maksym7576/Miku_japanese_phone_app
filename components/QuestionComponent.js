@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import correctIcon from '../assets/check-circle.png'; 
 import incorrectIcon from '../assets/octagon-xmark.png';
 
-const QuestionComponent = ({ question, answers }) => {
+const QuestionComponent = ({ question, answers, displayMode }) => {
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [isButtonDisabled, setIsButtonDisabled] = useState(false);
     const [answerHistory, setAnswerHistory] = useState([]);
@@ -29,11 +29,16 @@ const QuestionComponent = ({ question, answers }) => {
         }
     };
 
+    useEffect(() => {
+        // Reset button and modal state when displayMode changes
+        setSelectedAnswer(null);
+        setIsButtonDisabled(false);
+        setShowModal(false);
+    }, [displayMode]);
+
     const saveQuizResults = async () => {
         try {
-            const quizData = {
-                answerHistory,
-            };
+            const quizData = { answerHistory };
             await AsyncStorage.setItem('quizResults', JSON.stringify(quizData));
         } catch (error) {
             console.error('Error saving quiz results:', error);
@@ -43,7 +48,6 @@ const QuestionComponent = ({ question, answers }) => {
     const handleAnswerSelect = async (selected) => {
         setSelectedAnswer(selected);
         setIsButtonDisabled(true);
-
         const isCorrect = selected.correct;
         const answerRecord = {
             questionId: question.id,
@@ -65,8 +69,19 @@ const QuestionComponent = ({ question, answers }) => {
 
     const handleCloseModal = () => {
         setShowModal(false);
-        setIsButtonDisabled(false);
-        setSelectedAnswer(null);
+    };
+
+    const getDisplayedAnswer = (answer) => {
+        switch (displayMode) {
+            case 'kanji':
+                return answer.kanji_word;
+            case 'hiragana':
+                return answer.hiragana_or_katakana;
+            case 'romanji':
+                return answer.romanji_word;
+            default:
+                return answer.kanji_word;
+        }
     };
 
     return (
@@ -87,7 +102,7 @@ const QuestionComponent = ({ question, answers }) => {
                         onPress={() => handleAnswerSelect(option)}
                         disabled={isButtonDisabled}
                     >
-                        <Text style={styles.answerText}>{option.romanji_word}</Text>
+                        <Text style={styles.answerText}>{getDisplayedAnswer(option)}</Text>
                     </TouchableOpacity>
                 ))
             ) : (
@@ -126,8 +141,7 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         alignItems: 'center',
         backgroundColor: 'transparent',
-        paddingTop: 20,
-        paddingHorizontal: 16,
+        paddingHorizontal: 0,
     },
     questionText: {
         fontSize: 24,
@@ -201,6 +215,7 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
     },
+
 });
 
 export default QuestionComponent;

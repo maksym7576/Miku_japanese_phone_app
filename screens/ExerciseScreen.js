@@ -74,6 +74,7 @@ class ExerciseScreen extends Component {
     renderContent = () => {
         const { contentList, currentIndex, hasPlayedAudio } = this.state;
         const currentContent = contentList[currentIndex];
+        const { displayType } = this.state;
     
         if (
             currentContent &&
@@ -178,17 +179,17 @@ class ExerciseScreen extends Component {
                     );
                 case 'question':
                         return (
-                            <View style={styles.centeredContainer}>
+                            <View>
                             <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList || []}
                             />
                             <QuestionComponent 
                                 question={currentContent.content.object.question}
                                 answers={currentContent.content.object.answer}
+                                displayMode={displayType}
                                 />
                             </View>
                         );
                     case 'exercise_colocate':
-                        const { displayType } = this.state;
                         return (
                             <View style={styles.centeredContainer}>
                                  <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList || []}/>
