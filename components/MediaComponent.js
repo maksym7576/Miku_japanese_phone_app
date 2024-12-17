@@ -1,23 +1,37 @@
-import React, { Component } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import { Audio, Video } from 'expo-av';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
-class MediaComponent extends Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      sound: null,
-      isPlaying: false,
-      progress: 0,
-      hasPlayed: false,
-      videoProgress: 0,
-      isVideoPlaying: false,
-    };
-    this.videoRef = React.createRef(); // useRef для відео
-  }
+const MediaComponent = ({ mediaType, fileRecordsList}) => {
+  const [soundState, setSoundState] = useState({ sound: null, isPlaying: false, progress: 0 });
+  const [videoState, setVideoState] = useState({ isPlaying: false, progress: 0 });
+  const videoRef = useRef(null);
 
-  playAudio = async (audioUrl) => {
+  useEffect(() => {
+    const handleMedia = async () => {
+      if (mediaType === 'image_and_audio') {
+        const audioFile = fileRecordsList.find((file) => file.type === 'audio');
+        if (audioFile) {
+          setTimeout(() => playAudio(audioFile.url), 500); // Виклик з затримкою 0.5 секунди
+        }
+      }
+      if (mediaType === 'video') {
+        setTimeout(playVideo, 500); // Виклик з затримкою 0.5 секунди
+      }
+    };
+  
+    handleMedia();
+  
+    return () => {
+      stopAudio(); // Зупинити аудіо при зміні
+      stopVideo(); // Зупинити відео при зміні
+    };
+  }, [mediaType, fileRecordsList]);
+  
+  
+
+  const playAudio = async (audioUrl) => {
     try {
       const { sound } = await Audio.Sound.createAsync(
         { uri: audioUrl },
@@ -26,106 +40,100 @@ class MediaComponent extends Component {
           if (status.isLoaded) {
             if (status.isPlaying) {
               const progress = (status.positionMillis / status.durationMillis) * 100;
-              this.setState({ progress });
+              setSoundState((prevState) => ({ ...prevState, progress }));
             } else if (status.didJustFinish) {
-              this.setState({ progress: 100, isPlaying: false });
-              setTimeout(() => {
-                this.setState({ progress: 0 });
-              }, 500);
+              setSoundState({ sound: null, isPlaying: false, progress: 100 });
+              setTimeout(() => setSoundState({ sound: null, isPlaying: false, progress: 0 }), 500);
             }
           }
         }
       );
-      this.setState({ sound, isPlaying: true });
+      setSoundState({ sound, isPlaying: true, progress: 0 });
     } catch (error) {
       console.error('Error playing audio', error);
     }
   };
 
-  stopAudio = async () => {
-    const { sound } = this.state;
-    if (sound) {
-      await sound.stopAsync();
-      this.setState({ isPlaying: false, progress: 0 });
+  const stopAudio = async () => {
+    if (soundState.sound) {
+      await soundState.sound.stopAsync();
+      setSoundState({ sound: null, isPlaying: false, progress: 0 });
     }
   };
 
-  playVideo = async () => {
+  const playVideo = async () => {
     try {
-      const { fileRecordsList } = this.props;
-      const videoFile = fileRecordsList.find((file) => file.type === 'video');
-      if (videoFile && this.videoRef.current) {
-        this.setState({ videoProgress: 0, isVideoPlaying: true });
-        await this.videoRef.current.stopAsync(); // Stop any current video playback
-        await this.videoRef.current.setPositionAsync(0); // Reset to the start
-        await this.videoRef.current.playAsync(); // Start playing the video
+      if (videoRef.current) {
+        setVideoState({ isPlaying: true, progress: 0 });
+        await videoRef.current.stopAsync();
+        await videoRef.current.setPositionAsync(0);
+        await videoRef.current.playAsync();
       }
     } catch (error) {
       console.error('Error playing video:', error);
     }
   };
 
-  stopVideo = async () => {
+  const stopVideo = async () => {
     try {
-      if (this.videoRef.current) {
-        await this.videoRef.current.pauseAsync(); // Pause the video
-        await this.videoRef.current.setPositionAsync(0); // Reset to the start
-        this.setState({ isVideoPlaying: false, videoProgress: 0 });
+      if (videoRef.current) {
+        await videoRef.current.pauseAsync();
+        await videoRef.current.setPositionAsync(0);
+        setVideoState({ isPlaying: false, progress: 0 });
       }
     } catch (error) {
       console.error('Error stopping video:', error);
     }
   };
 
-  handleVideoPlaybackStatusUpdate = (status) => {
+  const handleVideoPlaybackStatusUpdate = (status) => {
     if (status.isLoaded) {
       const progress = (status.positionMillis / status.durationMillis) * 100;
-      this.setState({ videoProgress: progress });
+      setVideoState((prevState) => ({ ...prevState, progress }));
       if (status.didJustFinish) {
-        this.setState({ isVideoPlaying: false, videoProgress: 0 });
+        setVideoState({ isPlaying: false, progress: 0 });
       }
     }
   };
 
-  renderImage = (imageUrl, index) => (
+  const renderImage = (imageUrl, index) => (
     <Image key={index} source={{ uri: imageUrl }} style={styles.image} />
   );
 
-  renderAudio = (audioUrl, index) => (
+  const renderAudio = (audioUrl, index) => (
     <View key={index} style={styles.audioContainer}>
-      <TouchableOpacity onPress={this.state.isPlaying ? this.stopAudio : () => this.playAudio(audioUrl)}>
-        <Ionicons name={this.state.isPlaying ? 'stop-circle-outline' : 'play-circle-outline'} size={50} color="#fff" />
+      <TouchableOpacity onPress={soundState.isPlaying ? stopAudio : () => playAudio(audioUrl)}>
+        <Ionicons name={soundState.isPlaying ? 'stop-circle-outline' : 'play-circle-outline'} size={50} color="#fff" />
       </TouchableOpacity>
       <View style={styles.progressOverlay}>
-        <View style={[styles.progressBar, { width: `${this.state.progress}%` }]} />
+        <View style={[styles.progressBar, { width: `${soundState.progress}%` }]} />
       </View>
     </View>
   );
 
-  renderVideo = (videoUrl, index) => (
+  const renderVideo = (videoUrl, index) => (
     <View key={index} style={styles.imageContainer}>
       <Video
-        ref={this.videoRef}
+        ref={videoRef}
         source={{ uri: videoUrl }}
         style={styles.image}
         resizeMode="contain"
         shouldPlay={true}
         isLooping={false}
-        onPlaybackStatusUpdate={this.handleVideoPlaybackStatusUpdate}
+        onPlaybackStatusUpdate={handleVideoPlaybackStatusUpdate}
       />
       <View style={styles.audioContainer}>
-        <TouchableOpacity onPress={this.state.isVideoPlaying ? this.stopVideo : this.playVideo}>
-          <Ionicons name={this.state.isVideoPlaying ? 'stop-circle-outline' : 'play-circle-outline'} size={50} color="#fff" />
+        <TouchableOpacity onPress={videoState.isPlaying ? stopVideo : playVideo}>
+          <Ionicons name={videoState.isPlaying ? 'stop-circle-outline' : 'play-circle-outline'} size={50} color="#fff" />
         </TouchableOpacity>
         <View style={styles.progressOverlay}>
-          <View style={[styles.progressBar, { width: `${this.state.videoProgress}%` }]} />
+          <View style={[styles.progressBar, { width: `${videoState.progress}%` }]} />
         </View>
       </View>
     </View>
   );
 
-  renderContentByType = () => {
-    const { mediaType, fileRecordsList } = this.props;
+  const renderContentByType = () => {
     if (!fileRecordsList || !Array.isArray(fileRecordsList)) {
       return (
         <View>
@@ -135,32 +143,36 @@ class MediaComponent extends Component {
     }
 
     switch (mediaType) {
-      case 'image_and_audio':
+      case 'image_and_audio': {
         return (
           <View style={styles.imageContainer}>
             {fileRecordsList.map((file, index) => {
               if (file.type === 'image') {
-                return this.renderImage(file.url, index);
+                return renderImage(file.url, index);
               } else if (file.type === 'audio') {
-                return this.renderAudio(file.url, index);
+                return renderAudio(file.url, index);
               }
             })}
           </View>
         );
+      }
       case 'image':
         return (
           <View style={styles.imageContainer}>
-            {fileRecordsList.filter((file) => file.type === 'image').map((file, index) => this.renderImage(file.url, index))}
+            {fileRecordsList
+            .filter((file) => file.type === 'image')
+            .map((file, index) => renderImage(file.url, index))}
           </View>
         );
-      case 'video':
+      case 'video': {
         return (
           <View>
             {fileRecordsList
               .filter((file) => file.type === 'video')
-              .map((file, index) => this.renderVideo(file.url, index))}
+              .map((file, index) => renderVideo(file.url, index))}
           </View>
         );
+      }
       default:
         return (
           <View>
@@ -169,11 +181,10 @@ class MediaComponent extends Component {
         );
     }
   };
+  
 
-  render() {
-    return <View>{this.renderContentByType()}</View>;
-  }
-}
+  return <View>{renderContentByType()}</View>;
+};
 
 const styles = StyleSheet.create({
   container: {

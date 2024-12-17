@@ -1,14 +1,14 @@
 import React, { Component } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { ProgressBar } from 'react-native';
-import { Audio, Video } from 'expo-av';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import * as Font from 'expo-font';
-import { Ionicons } from '@expo/vector-icons';
 import QuestionComponent from '../components/QuestionComponent';
 import MediaComponent from '../components/MediaComponent';
 import ColocateExerciseComponent from '../components/ColocateExerciceComponent';
-
+const kanjiIcon = require('../assets/kanji-icon.png');
+const hiraganaIcon = require('../assets/hiragana-icon.png');
+const romanjiIcon = require('../assets/romanji-icon.png');
 class ExerciseScreen extends Component {
     constructor(props) {
         super(props);
@@ -16,7 +16,8 @@ class ExerciseScreen extends Component {
         this.state = {
             contentList: exerciseData || [],
             displayedContent: [],
-            displayType: 'original',
+            displayTypes: ["kanji", "hiragana", "romanji"],
+            displayType: "kanji",
             exersiceId: null,
             lessonResults: null,
             showLessonResults: false,
@@ -41,16 +42,13 @@ class ExerciseScreen extends Component {
         });
         this.setState({ fontsLoaded: true });
     }
-
-    displayTypes = ['kanji', 'hiragana', 'ronamji'];
-
-    // toggleDisplayType = () => {
-    //     this.setState((prevState) => {
-    //         const currentIndex = this.displayTypes.indexOf(prevState.displayType);
-    //         const newType = this.displayTypes[(currentIndex + 1) % this.displayTypes.length];
-    //         return { displayType: newType };
-    //     });
-    // };
+    
+    switchType = () => {
+        const { displayTypes, displayType } = this.state;
+        const currentIndex = displayTypes.indexOf(displayType);
+        const nextIndex = (currentIndex + 1) % displayTypes.length; // Зациклене перемикання
+        this.setState({ displayType: displayTypes[nextIndex] });
+      };
     
     handleNextContent = () => {
         this.setState((prevState) => {
@@ -69,46 +67,11 @@ class ExerciseScreen extends Component {
         }
     }
 
-    handleVideoPlaybackStatusUpdate = (status) => {
-        if (status.isLoaded) {
-            const progress = (status.positionMillis / status.durationMillis) * 100;
-            this.setState({ videoProgress: progress });
-            if (status.didJustFinish) {
-                this.setState({ isPlating: false, videoProgress: 0 });  // Коли відео завершується, зупиняємо його
-            }
-        }
-    };
+    
 
-    playVideo = async () => {
-        try {
-            this.setState({ videoProgress: 0, isPlating: true });  // Оновлюємо стан для відео
-            if (this.videoRef) {
-                await this.videoRef.stopAsync();  // Зупиняємо відео
-                await this.videoRef.setPositionAsync(0);  // Встановлюємо позицію на початок
-                await this.videoRef.playAsync();  // Починаємо відтворення
-            }
-        } catch (error) {
-            console.error("Error playing video:", error);
-        }
-    };
-    
-    stopVideo = async () => {
-        try {
-            if (this.videoRef) {
-                await this.videoRef.pauseAsync();  // Пауза відео
-                await this.videoRef.setPositionAsync(0);  // Встановлюємо позицію на початок
-                this.setState({ isPlating: false, videoProgress: 0 });  // Оновлюємо стан, щоб зупинити відео
-            }
-        } catch (error) {
-            console.error("Error stopping video:", error);
-        }
-    };
-
-    
-    
 
     renderContent = () => {
-        const { contentList, currentIndex, progress, isPlating, hasPlayedAudio} = this.state;
+        const { contentList, currentIndex, hasPlayedAudio} = this.state;
         const currentContent = contentList[currentIndex];
 
         if (
@@ -195,7 +158,7 @@ class ExerciseScreen extends Component {
                 case 'flash_card_popup':
                     return (
                     <View>
-                        <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList}/>
+                        <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList || []}/>
                 <Text style={styles.title_flash_card}>
                     {currentContent.content.object.textDTO.romanji_word}/{currentContent.content.object.textDTO.hiragana_or_katakana}/{currentContent.content.object.textDTO.kanji_word}
                 </Text>
@@ -205,7 +168,7 @@ class ExerciseScreen extends Component {
                 case 'question':
                         return (
                             <View style={styles.centeredContainer}>
-                            <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList}
+                            <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList || []}
                             />
                             <QuestionComponent 
                                 question={currentContent.content.object.question}
@@ -214,12 +177,13 @@ class ExerciseScreen extends Component {
                             </View>
                         );
                     case 'exercise_colocate':
+                        const { displayType } = this.state;
                         return (
                             <View style={styles.centeredContainer}>
-                                 <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList}/>єє
+                                 <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList || []}/>
                                 <ColocateExerciseComponent
                                  content={currentContent.content}
-                                 displayMode="hiragana"
+                                 displayMode={displayType}
                                 />
                             </View>
                         );
@@ -237,12 +201,30 @@ class ExerciseScreen extends Component {
     render() {
         const { contentList, currentIndex } = this.state;
         const isLastContent = currentIndex === contentList.length - 1;
+        const { displayType } = this.state;
     
         return (
             <View style={styles.container}>
-                <View style={styles.content}>{this.renderContent()}</View>
+                <View style={styles.content}>
+                    <View style={styles.switch}>
+                        <TouchableOpacity onPress={this.switchType} style={styles.buttonSwitch}>
+                            {displayType === "kanji" ? (
+                                <Image source={kanjiIcon} style={styles.icon} />
+                            ) : (displayType === "hiragana" ? (
+                                <Image source={hiraganaIcon} style={styles.icon} />
+                            ) : (
+                                <Image source={romanjiIcon} style={styles.icon} />
+                            ))}
+                            <Text style={styles.textSwitch}>{displayType}</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <View style={styles.exercise}>
+                        {this.renderContent()}
+                    </View>
+                </View>
+        
                 {this.state.displayedContent.map((item, index) => this.renderContent(item, index))}
-    
+        
                 {contentList.length > 0 ? (
                     isLastContent ? (
                         <TouchableOpacity onPress={this.handleFinish} style={styles.button}>
@@ -260,25 +242,72 @@ class ExerciseScreen extends Component {
 }
 
     const styles = StyleSheet.create({
-        container: {
-            flex: 1,
-            justifyContent: 'flex-start',
-            alignItems: 'stretch',
-            backgroundColor: '#f0f0f0',
-        },
-        content: {
-            flexGrow: 1,
-            marginBottom: 20,
-            padding: 20,
-            backgroundColor: '#fff',
-            borderRadius: 10,
-            shadowColor: '#000',
-            shadowOpacity: 0.1,
-            shadowOffset: { width:0, height: 2},
-            shadowRadius: 4,
-            elevation: 2,
-            alightItems: 'center',
-        },
+      container: {
+        flex: 1,
+        justifyContent: 'flex-start',
+        alignItems: 'stretch',
+        backgroundColor: '#f0f0f0',
+    },
+    content: {
+        flexGrow: 1,
+        marginBottom: 20,
+        padding: 20,
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        shadowColor: '#000',
+        shadowOpacity: 0.1,
+        shadowOffset: { width: 0, height: 2 },
+        shadowRadius: 4,
+        elevation: 2,
+        alignItems: 'center',
+    },
+    exercise: {
+        marginTop: 25,
+    },
+    switch: {
+        position: 'absolute',
+        top: 0,
+        right: 0,
+        marginTop: -10,
+    },
+    buttonSwitch: {
+        marginVertical: 5,
+        paddingVertical: 8,
+        paddingHorizontal: 15,
+        borderRadius: 10,
+        backgroundColor: '#007AFF',
+        flexDirection: 'row',
+        alignItems: 'center',  // вирівнює по вертикалі
+        justifyContent: 'center',  // вирівнює по горизонталі
+        elevation: 3,  // для тіні при натисканні
+    },
+    icon: {
+        width: 20,
+        height: 20,
+        marginRight: 8,
+        tintColor: '#ffffff',
+        alignSelf: 'center',  // вирівнює по вертикалі в середині контейнера
+    },
+    textSwitch: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    button: {
+        backgroundColor: '#28a745',
+        paddingVertical: 12,
+        paddingHorizontal: 30,
+        borderRadius: 8,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 20,
+        elevation: 3,  // тінь для кнопки
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
         title: {
             fontSize: 21,
             fontWeight: 'bold',
