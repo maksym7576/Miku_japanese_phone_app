@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import * as Font from 'expo-font';
 import QuestionComponent from '../components/QuestionComponent';
@@ -66,44 +66,48 @@ class ExerciseScreen extends Component {
             this.state.sound.unloadAsync();
         }
     }
+    
 
     
 
 
     renderContent = () => {
-        const { contentList, currentIndex, hasPlayedAudio} = this.state;
+        const { contentList, currentIndex, hasPlayedAudio } = this.state;
         const currentContent = contentList[currentIndex];
-
+    
         if (
             currentContent &&
             currentContent.type === 'flash_card_popup' &&
             !hasPlayedAudio
         ) {
             setTimeout(() => {
-            {currentContent.content.fileRecordsList.map((fileRecord, index) => {
-            if (fileRecord.type === "audio") {
-            this.playAudio(fileRecord.url);
-            }})}
-            this.setState({ hasPlayedAudio: true }); // Встановити прапорець
+                currentContent.content.fileRecordsList?.forEach((fileRecord) => {
+                    if (fileRecord.type === "audio") {
+                        this.playAudio(fileRecord.url);
+                    }
+                });
+                this.setState({ hasPlayedAudio: true }); // Встановити прапорець
             }, 500);
         }
+    
         if (
             currentContent &&
             currentContent.type === 'explanation_with_phrases' &&
             !hasPlayedAudio
         ) {
             setTimeout(() => {
-            this.playVideo();
-            this.setState({ hasPlayedAudio: true }); // Встановити прапорець
+                this.playVideo();
+                this.setState({ hasPlayedAudio: true }); // Встановити прапорець
             }, 500);
         }
+    
         switch (currentContent.type) {
             case 'details':
                 return (
                     <View>
                         <Text style={styles.title}>{currentContent.content.name}</Text>
                         <View style={styles.containerPhrase}>
-                        <Text style={styles.description}>{currentContent.content.startDialogue}</Text>
+                            <Text style={styles.description}>{currentContent.content.startDialogue}</Text>
                         </View>
                     </View>
                 );
@@ -157,14 +161,21 @@ class ExerciseScreen extends Component {
                 );  
                 case 'flash_card_popup':
                     return (
-                    <View>
-                        <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList || []}/>
-                <Text style={styles.title_flash_card}>
-                    {currentContent.content.object.textDTO.romanji_word}/{currentContent.content.object.textDTO.hiragana_or_katakana}/{currentContent.content.object.textDTO.kanji_word}
-                </Text>
-                <Text style={styles.translation_flash_card}>{currentContent.content.object.textDTO.translation}</Text>
-                </View>
-                 );
+                        <View>
+                            <MediaComponent
+                                mediaType={currentContent.content.mediaPackage.mediaType}
+                                fileRecordsList={currentContent.content.mediaPackage.fileRecordsList || []}
+                            />
+                            <Text style={styles.title_flash_card}>
+                                {currentContent.content.object.textDTO.romanji_word}/
+                                {currentContent.content.object.textDTO.hiragana_or_katakana}/
+                                {currentContent.content.object.textDTO.kanji_word}
+                            </Text>
+                            <Text style={styles.translation_flash_card}>
+                                {currentContent.content.object.textDTO.translation}
+                            </Text>
+                        </View>
+                    );
                 case 'question':
                         return (
                             <View style={styles.centeredContainer}>
@@ -218,13 +229,14 @@ class ExerciseScreen extends Component {
                             <Text style={styles.textSwitch}>{displayType}</Text>
                         </TouchableOpacity>
                     </View>
+                    <ScrollView style={styles.scrollViewContainer}>
                     <View style={styles.exercise}>
                         {this.renderContent()}
                     </View>
+                    </ScrollView>
                 </View>
-        
                 {this.state.displayedContent.map((item, index) => this.renderContent(item, index))}
-        
+                            
                 {contentList.length > 0 ? (
                     isLastContent ? (
                         <TouchableOpacity onPress={this.handleFinish} style={styles.button}>
@@ -264,11 +276,15 @@ class ExerciseScreen extends Component {
     exercise: {
         marginTop: 25,
     },
+    scrollViewContainer: {
+        flex: 1,  // Це дозволить прокручувати вміст
+    },
     switch: {
         position: 'absolute',
         top: 0,
         right: 0,
         marginTop: -10,
+        zIndex: 10,   
     },
     buttonSwitch: {
         marginVertical: 5,
@@ -294,6 +310,10 @@ class ExerciseScreen extends Component {
         fontWeight: 'bold',
     },
     button: {
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        right: 0,
         backgroundColor: '#28a745',
         paddingVertical: 12,
         paddingHorizontal: 30,
@@ -301,7 +321,7 @@ class ExerciseScreen extends Component {
         alignItems: 'center',
         justifyContent: 'center',
         marginTop: 20,
-        elevation: 3,  // тінь для кнопки
+        elevation: 3,
     },
     buttonText: {
         color: '#fff',

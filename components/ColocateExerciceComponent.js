@@ -1,9 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Button } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Button, Modal, Image } from 'react-native';
+
+import correctIcon from '../assets/check-circle.png'; 
+import incorrectIcon from '../assets/octagon-xmark.png';
 
 const ColocateExerciseComponent = ({ content, displayMode }) => {
   const [selectedWords, setSelectedWords] = useState([]);
   const [remainingWords, setRemainingWords] = useState([]);
+  const [showModal, setShowModal] = useState(false); // Modal visibility state
+  const [isCorrectAnswer, setIsCorrectAnswer] = useState(false); // Correct answer check
+  const [modalMessage, setModalMessage] = useState('');
 
   useEffect(() => {
     // Оновлення масивів слів залежно від displayMode
@@ -21,33 +27,64 @@ const ColocateExerciseComponent = ({ content, displayMode }) => {
         setRemainingWords(content.object.colocateWordsDTO.wordsKanjiArray);
         break;
     }
+    // Очистити вибрані слова при зміні displayMode
+    setSelectedWords([]);
+    setShowModal(false);
   }, [displayMode, content]);
 
+  useEffect(() => {
+    // Перевірка, чи залишилось тільки одне слово в remainingWords
+    if (remainingWords.length === 0) {
+      handleCheckAnswer(); // Якщо залишилось тільки одне слово, викликаємо перевірку
+    }
+  }, [remainingWords]); // Стежимо за змінами в remainingWords
+
   const handleWordPress = (word) => {
+    // Додаємо вибране слово до масиву selectedWords
     setSelectedWords([...selectedWords, word]);
+    
+    // Видаляємо вибране слово з масиву remainingWords
     setRemainingWords(remainingWords.filter((w) => w !== word));
   };
-
   const handleWordRemoval = (word) => {
     setSelectedWords(selectedWords.filter((w) => w !== word));
     setRemainingWords([...remainingWords, word]);
   };
 
-  const getTextColor = () => {
+  const handleCheckAnswer = () => {
+    let correctAnswer = '';
+  
+    // Select the correct answer based on the displayMode
     switch (displayMode) {
       case 'kanji':
-        return '#000000'; // Black for Kanji
+        correctAnswer = content.object.colocateWordsDTO.correctKanji;
+        break;
       case 'hiragana':
-        return '#0000FF'; // Blue for Hiragana
+        correctAnswer = content.object.colocateWordsDTO.correctHiraganaKatakana;
+        break;
       case 'romanji':
-        return '#FF0000'; // Red for Romanji
+        correctAnswer = content.object.colocateWordsDTO.correctRomanji;
+        break;
       default:
-        return '#000000'; // Default black color
+        correctAnswer = content.object.colocateWordsDTO.correctKanji; // Default to kanji if displayMode is undefined
     }
+  
+    // Join the selected words into a string and compare
+    const userAnswer = selectedWords.join(''); // Join the selected words into a single string
+    const userRomanjiAnswer = selectedWords.join(' ');
+    if (userAnswer === correctAnswer || userRomanjiAnswer === correctAnswer) {
+      setIsCorrectAnswer(true);
+      setModalMessage('Correct answer!');
+    } else {
+      setIsCorrectAnswer(false);
+      setModalMessage('Incorrect answer. Try again!');
+    }
+  
+    setShowModal(true); // Show the modal after checking
   };
 
-  const handleCheckAnswer = () => {
-    // Тут можна додати перевірку правильності
+  const handleCloseModal = () => {
+    setShowModal(false);
   };
 
   return (
@@ -78,9 +115,29 @@ const ColocateExerciseComponent = ({ content, displayMode }) => {
         ))}
       </View>
 
-      <View style={styles.buttonContainer}>
-        <Button title="Перевірити" onPress={handleCheckAnswer} />
-      </View>
+      {/* Modal component */}
+      <Modal
+        visible={showModal}
+        transparent={true}
+        animationType="slide"
+        onRequestClose={handleCloseModal}
+      >
+        <View style={styles.modalBackground}>
+          <View style={styles.modalContainer}>
+            <Image
+              source={isCorrectAnswer ? correctIcon : incorrectIcon}
+              style={styles.icon}
+            />
+            <Text style={styles.modalMessage}>{modalMessage}</Text>
+            {content.object.question.description && (
+              <Text style={styles.modalMessage}>{content.object.question.description}</Text>
+            )}
+            <TouchableOpacity style={styles.continueButton} onPress={handleCloseModal}>
+              <Text style={styles.continueText}>Continue</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -115,17 +172,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   selectedWordsContainer: {
-    flexDirection: 'row',           // Розміщення слів в ряд
-    flexWrap: 'wrap',               // Перехід на новий рядок
-    justifyContent: 'center',       // Вирівнювання вибраних слів по центру
-    borderWidth: 1,                 // Обводка навколо контейнера
-    borderColor: '#ccc',            // Колір обводки
-    padding: 10,                    // Внутрішній відступ
-    width: '100%',    
-    minWidth: 300,               // Ширина контейнера 100%
-    height: '40%',                    // Фіксована висота або висота, яку ви хочете
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    width: '100%',
+    minWidth: 300,
+    minHeight: '40%',
   },
-
   selectedWordButton: {
     backgroundColor: '#d0d0d0',
     padding: 10,
@@ -136,7 +192,45 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   buttonContainer: {
-    marginBottom: 0,
+      position: 'absolute',
+      bottom: 20, // Distance from the bottom of the screen
+      left: 0,
+      right: 0,
+      marginBottom: 20, // Optional: to give some space from the bottom
+      paddingHorizontal: 20, // Optional: to give padding left and right
+      alignItems: 'center', // Center the button ho
+    
+  },
+  modalBackground: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContainer: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  icon: {
+    width: 50,
+    height: 50,
+    marginBottom: 20,
+  },
+  modalMessage: {
+    fontSize: 18,
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  continueButton: {
+    backgroundColor: '#007bff',
+    padding: 10,
+    borderRadius: 5,
+  },
+  continueText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });
 
