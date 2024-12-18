@@ -1,3 +1,3 @@
 export const API_CONFIG = {
-    BASE_URL: 'https://jersey-street-funk-literature.trycloudflare.com/api',
+    BASE_URL: 'https://offered-hdtv-elvis-packard.trycloudflare.com/api',
   };

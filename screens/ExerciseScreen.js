@@ -6,6 +6,8 @@ import * as Font from 'expo-font';
 import QuestionComponent from '../components/QuestionComponent';
 import MediaComponent from '../components/MediaComponent';
 import ColocateExerciseComponent from '../components/ColocateExerciceComponent';
+import SentenceCorrectionComponent from '../components/ColocateWIthErrorsComponent';
+import ChooseQuestion from '../components/ChooseQuestion';
 const kanjiIcon = require('../assets/kanji-icon.png');
 const hiraganaIcon = require('../assets/hiragana-icon.png');
 const romanjiIcon = require('../assets/romanji-icon.png');
@@ -199,6 +201,44 @@ class ExerciseScreen extends Component {
                                 />
                             </View>
                         );
+                    case 'colocate_with_finding_errors':
+                        return (
+                            <View>
+                                <SentenceCorrectionComponent
+                                content={currentContent.content}
+                                displayMode={displayType}
+                                />
+                            </View>
+                        );
+                    case 'fact':
+                        return (
+                            <View>
+                                   <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList || []}/>
+                                   <Text style={styles.title}>{currentContent.content.object.topic}</Text>
+                        <View style={styles.containerPhrase}>
+                            <Text style={styles.description}>{currentContent.content.object.description}</Text>
+                        </View>
+                            </View>
+                        );
+                    case 'question_with_english_answers':
+                        return (
+                            <View>
+                                <MediaComponent mediaType={currentContent.content.mediaPackage.mediaType} fileRecordsList={currentContent.content.mediaPackage.fileRecordsList || []}/>
+                                <QuestionComponent 
+                                question={currentContent.content.object.question}
+                                answers={currentContent.content.object.questionAnswerList}
+                                displayMode="none"
+                                />
+                            </View>
+                        );
+                    case 'question_choose':
+                        return (
+                            <View>
+                                <ChooseQuestion
+                                content={currentContent.content}
+                                />
+                            </View>
+                        )                
                 default:
                     return null;
         }

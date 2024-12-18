@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-import correctIcon from '../assets/check-circle.png'; 
-import incorrectIcon from '../assets/octagon-xmark.png';
+import correctIcon from '../assets/isCorrectsStates/miku_ok.png'; 
+import incorrectIcon from '../assets/isCorrectsStates/miku_not.png';
+import ModalWindow from './ModalWindow';
 
 const QuestionComponent = ({ question, answers, displayMode }) => {
     const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -31,9 +32,9 @@ const QuestionComponent = ({ question, answers, displayMode }) => {
 
     useEffect(() => {
         // Reset button and modal state when displayMode changes
-        setSelectedAnswer(null);
-        setIsButtonDisabled(false);
-        setShowModal(false);
+        // setSelectedAnswer(null);
+        // setIsButtonDisabled(false);
+        // setShowModal(false);
     }, [displayMode]);
 
     const saveQuizResults = async () => {
@@ -55,7 +56,9 @@ const QuestionComponent = ({ question, answers, displayMode }) => {
             isCorrect,
         };
 
-        setModalMessage(`Correct answer: ${findCorrectAnswer()?.romanji_word || 'N/A'}`);
+        setModalMessage(findCorrectAnswer()?.[displayMode === 'kanji' ? 'kanji_word' : 
+            displayMode === 'hiragana' ? 'hiragana_or_katakana' : 
+            displayMode === 'romanji' ? 'romanji_word' : 'question'] || 'N/A');
         setIsCorrectAnswer(isCorrect);
         setAnswerHistory((prev) => [...prev, answerRecord]);
         setShowModal(true);
@@ -80,7 +83,7 @@ const QuestionComponent = ({ question, answers, displayMode }) => {
             case 'romanji':
                 return answer.romanji_word;
             default:
-                return answer.kanji_word;
+                return answer.question;
         }
     };
 
@@ -108,29 +111,38 @@ const QuestionComponent = ({ question, answers, displayMode }) => {
             ) : (
                 <Text style={styles.noAnswersText}>No answers available</Text>
             )}
-
-            <Modal
+            {showModal === true && (
+            <ModalWindow
+                isCorrect={isCorrectAnswer}
+                correctAnswer={modalMessage}
+                description={question.description}
+                visible={showModal}
+                setVisible={setShowModal}
+            />
+            )}
+            {/* <Modal
                 visible={showModal}
                 transparent={true}
                 animationType="slide"
                 onRequestClose={handleCloseModal}
             >
                 <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <Image
+                <Image
                             source={isCorrectAnswer ? correctIcon : incorrectIcon}
                             style={styles.icon}
                         />
+                    <View style={isCorrectAnswer ? styles.modalContainerCorrect : styles.modalContainerIncorrect}>
+                  
                         <Text style={styles.modalMessage}>{modalMessage}</Text>
                         {question?.description && (
-                            <Text style={styles.modalMessage}>{question.description}</Text>
+                            <Text style={styles.modalMessage}>Explanation: {question.description}</Text>
                         )}
-                        <TouchableOpacity style={styles.continueButton} onPress={handleCloseModal}>
+                        <TouchableOpacity style={isCorrectAnswer ? styles.continueButtonCorrect : styles.continueButtonError} onPress={handleCloseModal}>
                             <Text style={styles.continueText}>Continue</Text>
                         </TouchableOpacity>
                     </View>
                 </View>
-            </Modal>
+            </Modal> */}
         </View>
     );
 };
@@ -184,36 +196,80 @@ const styles = StyleSheet.create({
     modalBackground: {
         flex: 1,
         justifyContent: 'flex-end',
-        alignItems: 'center',
+        alignItems: 'left',
         backgroundColor: 'rgba(0, 0, 0, 0.5)',
     },
     modalContainer: {
         backgroundColor: 'white',
+        elevation: 10, 
         padding: 20,
         borderRadius: 8,
+        // textAlign: 'left',
         width: '100%',
-        alignItems: 'center',
+        // alignItems: 'center',
     },
+    modalContainerCorrect: {
+        backgroundColor: '#d4e5ed', // Світло-зелений (пастельний)
+        elevation: 5, // Легка тінь
+        padding: 20,
+        borderRadius: 12, // Більше заокруглення
+        width: '100%',
+        opacity: 0.95, // Майже повна прозорість
+        borderWidth: 1,
+        borderColor: '#c3e6cb', // Трохи темніша рамка
+    },
+    
+    modalContainerIncorrect: {
+        backgroundColor: '#f8d7da', // Світло-червоний (пастельний)
+        elevation: 5,
+        padding: 20,
+        borderRadius: 12,
+        width: '100%',
+        opacity: 0.95,
+        borderWidth: 1,
+        borderColor: '#f5c6cb', // Трохи темніша рамка
+    },
+    
     icon: {
-        width: 50,
-        height: 50,
-        marginBottom: 20,
+        alignItems: 'flex-end',
+        width: 120,
+        height: 120,
+        // marginBottom: 20,
     },
     modalMessage: {
         fontSize: 16,
-        marginBottom: 20,
-        textAlign: 'center',
+        marginBottom: 5,
+        textAlign: 'left',
     },
-    continueButton: {
-        backgroundColor: '#007bff',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 5,
+    continueButtonCorrect: {
+        backgroundColor: '#4a90e2', // М'який синій відтінок
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 8, // Більше заокруглення
+        alignItems: 'center',
+        shadowColor: '#000', // Тінь для об'єму
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 4, // Тінь для Android
+    },
+    continueButtonError: {
+        backgroundColor: '#e24a51', // М'який синій відтінок
+        paddingVertical: 12,
+        paddingHorizontal: 24,
+        borderRadius: 8, // Більше заокруглення
+        alignItems: 'center',
+        shadowColor: '#000', // Тінь для об'єму
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+        elevation: 4, // Тінь для Android
     },
     continueText: {
-        color: 'white',
+        color: '#ffffff', // Білий текст
         fontSize: 16,
-        fontWeight: 'bold',
+        fontWeight: '600', // Напівжирний текст
+        letterSpacing: 0.5,
     },
 
 });

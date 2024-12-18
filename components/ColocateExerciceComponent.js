@@ -1,54 +1,87 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Button, Modal, Image } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, Image } from 'react-native';
 
 import correctIcon from '../assets/check-circle.png'; 
 import incorrectIcon from '../assets/octagon-xmark.png';
+import ModalWindow from './ModalWindow';
 
 const ColocateExerciseComponent = ({ content, displayMode }) => {
   const [selectedWords, setSelectedWords] = useState([]);
   const [remainingWords, setRemainingWords] = useState([]);
-  const [showModal, setShowModal] = useState(false); // Modal visibility state
-  const [isCorrectAnswer, setIsCorrectAnswer] = useState(false); // Correct answer check
+  const [phrase, setPhase] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
   const [modalMessage, setModalMessage] = useState('');
-
+  const [isButtonDisabled, setIsButtonDisabled] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [isDisplayModeChanging, setIsDisplayModeChanging] = useState(false);
   useEffect(() => {
-    // Оновлення масивів слів залежно від displayMode
+    setIsDisplayModeChanging(true);
+    
+    let newWords = [];
     switch (displayMode) {
       case 'kanji':
-        setRemainingWords(content.object.colocateWordsDTO.wordsKanjiArray);
+        newWords = content.object.colocateWordsDTO.wordsKanjiArray;
+        setPhase(content.object.colocateWordsDTO.correctKanji);
         break;
       case 'hiragana':
-        setRemainingWords(content.object.colocateWordsDTO.wordsHiraganaKatakanaArray);
+        newWords = content.object.colocateWordsDTO.wordsHiraganaKatakanaArray;
+        setPhase(content.object.colocateWordsDTO.correctHiraganaKatakana);
         break;
       case 'romanji':
-        setRemainingWords(content.object.colocateWordsDTO.wordsRomanjiArray);
+        newWords = content.object.colocateWordsDTO.wordsRomanjiArray;
+        setPhase(content.object.colocateWordsDTO.correctRomanji);
         break;
       default:
-        setRemainingWords(content.object.colocateWordsDTO.wordsKanjiArray);
-        break;
+        newWords = content.object.colocateWordsDTO.wordsKanjiArray;
+        setPhase(content.object.colocateWordsDTO.correctKanji);
     }
-    // Очистити вибрані слова при зміні displayMode
-    setSelectedWords([]);
-    setShowModal(false);
+  
+    // Додаємо порівняння поточних і нових слів
+    const currentWords = [...selectedWords, ...remainingWords];
+    const hasWordsChanged = currentWords.length !== newWords.length || 
+      currentWords.some((word, index) => word !== newWords[index]);
+  
+    if (selectedWords.length > 0 && hasWordsChanged) {
+      const updatedSelected = selectedWords.map((_, index) => newWords[index]);
+      const remainingNewWords = newWords.slice(selectedWords.length);
+      
+      setSelectedWords(updatedSelected);
+      setRemainingWords(remainingNewWords);
+    } else if (!selectedWords.length) {
+      setRemainingWords(newWords);
+    }
+    
+    setIsDisplayModeChanging(false);
   }, [displayMode, content]);
-
+  
+  // Змінимо умову перевірки відповіді
   useEffect(() => {
-    // Перевірка, чи залишилось тільки одне слово в remainingWords
-    if (remainingWords.length === 0) {
-      handleCheckAnswer(); // Якщо залишилось тільки одне слово, викликаємо перевірку
+    console.log('remainingWords:', remainingWords);
+    console.log('selectedWords:', selectedWords);
+    console.log('isDisplayModeChanging:', isDisplayModeChanging);
+    
+    if (!isDisplayModeChanging && remainingWords.length === 0 && selectedWords.length > 0) {
+      console.log('Triggering check answer');
+      handleCheckAnswer();
     }
-  }, [remainingWords]); // Стежимо за змінами в remainingWords
+  }, [remainingWords, selectedWords, isDisplayModeChanging]);
 
   const handleWordPress = (word) => {
-    // Додаємо вибране слово до масиву selectedWords
-    setSelectedWords([...selectedWords, word]);
-    
-    // Видаляємо вибране слово з масиву remainingWords
-    setRemainingWords(remainingWords.filter((w) => w !== word));
+    if (!isButtonDisabled) {
+      // Додаємо вибране слово до масиву selectedWords
+      setSelectedWords([...selectedWords, word]);
+      
+      // Видаляємо вибране слово з масиву remainingWords
+      setRemainingWords(remainingWords.filter((w) => w !== word));
+    }
   };
+
   const handleWordRemoval = (word) => {
-    setSelectedWords(selectedWords.filter((w) => w !== word));
-    setRemainingWords([...remainingWords, word]);
+    if (!showModal && !isButtonDisabled) {
+      setSelectedWords(selectedWords.filter((w) => w !== word));
+      setRemainingWords([...remainingWords, word]);
+    }
   };
 
   const handleCheckAnswer = () => {
@@ -66,12 +99,15 @@ const ColocateExerciseComponent = ({ content, displayMode }) => {
         correctAnswer = content.object.colocateWordsDTO.correctRomanji;
         break;
       default:
-        correctAnswer = content.object.colocateWordsDTO.correctKanji; // Default to kanji if displayMode is undefined
+        correctAnswer = content.object.colocateWordsDTO.correctKanji;
     }
   
     // Join the selected words into a string and compare
-    const userAnswer = selectedWords.join(''); // Join the selected words into a single string
+    const userAnswer = selectedWords.join('');
     const userRomanjiAnswer = selectedWords.join(' ');
+    
+    setIsButtonDisabled(true);
+    
     if (userAnswer === correctAnswer || userRomanjiAnswer === correctAnswer) {
       setIsCorrectAnswer(true);
       setModalMessage('Correct answer!');
@@ -80,7 +116,7 @@ const ColocateExerciseComponent = ({ content, displayMode }) => {
       setModalMessage('Incorrect answer. Try again!');
     }
   
-    setShowModal(true); // Show the modal after checking
+    setShowModal(true);
   };
 
   const handleCloseModal = () => {
@@ -97,6 +133,7 @@ const ColocateExerciseComponent = ({ content, displayMode }) => {
             key={index}
             style={styles.selectedWordButton}
             onPress={() => handleWordRemoval(word)}
+            disabled={showModal || isButtonDisabled}
           >
             <Text style={styles.selectedWord}>{word}</Text>
           </TouchableOpacity>
@@ -107,37 +144,26 @@ const ColocateExerciseComponent = ({ content, displayMode }) => {
         {remainingWords.map((word, index) => (
           <TouchableOpacity
             key={index}
-            style={styles.wordButton}
+            style={[
+              styles.wordButton,
+              showModal && styles.disabledButton
+            ]}
             onPress={() => handleWordPress(word)}
+            disabled={showModal || isButtonDisabled}
           >
             <Text style={styles.wordText}>{word}</Text>
           </TouchableOpacity>
         ))}
       </View>
-
-      {/* Modal component */}
-      <Modal
-        visible={showModal}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={handleCloseModal}
-      >
-        <View style={styles.modalBackground}>
-          <View style={styles.modalContainer}>
-            <Image
-              source={isCorrectAnswer ? correctIcon : incorrectIcon}
-              style={styles.icon}
-            />
-            <Text style={styles.modalMessage}>{modalMessage}</Text>
-            {content.object.question.description && (
-              <Text style={styles.modalMessage}>{content.object.question.description}</Text>
-            )}
-            <TouchableOpacity style={styles.continueButton} onPress={handleCloseModal}>
-              <Text style={styles.continueText}>Continue</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+    {showModal === true && (
+  <ModalWindow
+    isCorrect={isCorrectAnswer}
+    correctAnswer={phrase}
+    description={content.object.question.description}
+    visible={showModal}
+    setVisible={setShowModal}
+  />
+)}
     </View>
   );
 };
@@ -168,6 +194,9 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     maxWidth: '30%',
   },
+  disabledButton: {
+    backgroundColor: '#d3d3d3',
+  },
   wordText: {
     fontSize: 16,
   },
@@ -190,16 +219,6 @@ const styles = StyleSheet.create({
   },
   selectedWord: {
     fontSize: 16,
-  },
-  buttonContainer: {
-      position: 'absolute',
-      bottom: 20, // Distance from the bottom of the screen
-      left: 0,
-      right: 0,
-      marginBottom: 20, // Optional: to give some space from the bottom
-      paddingHorizontal: 20, // Optional: to give padding left and right
-      alignItems: 'center', // Center the button ho
-    
   },
   modalBackground: {
     flex: 1,
