@@ -30,13 +30,6 @@ const QuestionComponent = ({ question, answers, displayMode }) => {
         }
     };
 
-    useEffect(() => {
-        // Reset button and modal state when displayMode changes
-        // setSelectedAnswer(null);
-        // setIsButtonDisabled(false);
-        // setShowModal(false);
-    }, [displayMode]);
-
     const saveQuizResults = async () => {
         try {
             const quizData = { answerHistory };
@@ -120,29 +113,6 @@ const QuestionComponent = ({ question, answers, displayMode }) => {
                 setVisible={setShowModal}
             />
             )}
-            {/* <Modal
-                visible={showModal}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={handleCloseModal}
-            >
-                <View style={styles.modalBackground}>
-                <Image
-                            source={isCorrectAnswer ? correctIcon : incorrectIcon}
-                            style={styles.icon}
-                        />
-                    <View style={isCorrectAnswer ? styles.modalContainerCorrect : styles.modalContainerIncorrect}>
-                  
-                        <Text style={styles.modalMessage}>{modalMessage}</Text>
-                        {question?.description && (
-                            <Text style={styles.modalMessage}>Explanation: {question.description}</Text>
-                        )}
-                        <TouchableOpacity style={isCorrectAnswer ? styles.continueButtonCorrect : styles.continueButtonError} onPress={handleCloseModal}>
-                            <Text style={styles.continueText}>Continue</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal> */}
         </View>
     );
 };

@@ -1,3 +1,3 @@
 export const API_CONFIG = {
-    BASE_URL: 'https://garlic-griffin-dangerous-saver.trycloudflare.com/api',
+    BASE_URL: 'https://ross-predict-consequently-appointments.trycloudflare.com/api',
   };

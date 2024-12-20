@@ -12,7 +12,6 @@ const ColocateExerciseComponent = ({ content, displayMode }) => {
   const [currentDisplayMode, setCurrentDisplayMode] = useState(displayMode);
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Початкова ініціалізація при першому рендері
   useEffect(() => {
     if (!isInitialized) {
       let initialWords = [];
@@ -38,7 +37,6 @@ const ColocateExerciseComponent = ({ content, displayMode }) => {
     }
   }, []);
 
-  // Обробка зміни режиму відображення
   useEffect(() => {
     if (isInitialized && currentDisplayMode !== displayMode) {
       setCurrentDisplayMode(displayMode);
