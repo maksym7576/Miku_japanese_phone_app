@@ -1,158 +1,234 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  StyleSheet,
-  Animated,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import ModalWindow from './ModalWindow';
 
 const SentenceCorrectionComponent = (props) => {
-  const [sentence, setSentence] = useState([]);
-  const [removedWords, setRemovedWords] = useState([]);
-  const [availableWords, setAvailableWords] = useState([]);
-  const [showModal, setShowModal] = useState(false);
-  const [remainingChanges, setRemainingChanges] = useState(0);
-  const [progress] = useState(new Animated.Value(0));
-  const [isResetVisible, setIsResetVisible] = useState(false);
-  const [isTimerComplete, setIsTimerComplete] = useState(false);
-  const [isBlocked, setIsBlocked] = useState(false);
+  const [state, setState] = useState({
+    sentence: [],
+    removedWords: [],
+    availableWords: [],
+    phrase: '',
+    showModal: false,
+    remainingChanges: 0,
+    progress: new Animated.Value(0),
+    isResetVisible: false,
+    isTimerComplete: false,
+    isBlocked: false,
+    isCorrect: false,
+    isInitialized: false,
+    hasCompletedOnce: false,
+    isChecking: false,
+  });
 
   useEffect(() => {
-    if (!isBlocked) {
-      initializeWords();
-    }
+    const wasBlocked = state.isBlocked;
+    const wasTimerComplete = state.isTimerComplete;
+    const hadCompleted = state.hasCompletedOnce;
+    const wasShowingModal = state.showModal;
+    const wasChecking = state.isChecking;
+    
+    initializeWords(wasBlocked, wasTimerComplete, hadCompleted, wasShowingModal, wasChecking);
   }, [props.displayMode, props.content]);
 
-  const initializeWords = () => {
-    const sentence = getWordsArray();
-    const availableWords = initializeAvailableWords();
-    const initialChanges = props.content.needsToBeChanged * 2;
+  const initializeWords = (wasBlocked, wasTimerComplete, hadCompleted, wasShowingModal, wasChecking) => {
+    const { content } = props;
+    
+    const sentence = content.colocateWords.wordsList.map(word => ({
+      wordObject: word,
+      isEmpty: false
+    }));
 
-    setSentence(sentence);
-    setAvailableWords(availableWords);
-    setRemainingChanges(initialChanges);
-    setIsResetVisible(false);
-    setRemovedWords([]);
-    setIsTimerComplete(false);
+    const availableWords = content.correctWordsList;
+    const initialChanges = wasBlocked ? 0 : content.needsToBeChanged * 2;
+    const phrase = getCorrectPhrase();
+
+    setState((prevState) => ({
+      ...prevState,
+      sentence,
+      availableWords,
+      phrase,
+      remainingChanges: initialChanges,
+      isResetVisible: wasChecking,
+      removedWords: [],
+      isTimerComplete: wasTimerComplete,
+      isBlocked: wasBlocked,
+      isInitialized: true,
+      hasCompletedOnce: hadCompleted,
+      showModal: wasShowingModal,
+      isChecking: wasChecking
+    }));
   };
 
-  const getWordsArray = () => {
-    const { displayMode, content } = props;
-    return displayMode === 'kanji'
-      ? content.colocateWords.wordsKanjiArray
-      : displayMode === 'hiragana'
-      ? content.colocateWords.wordsHiraganaKatakanaArray
-      : content.colocateWords.wordsRomanjiArray;
+  const getWordValue = (wordObject) => {
+    const { displayMode } = props;
+    if (!wordObject) return '';
+
+    switch (displayMode) {
+      case 'kanji':
+        return wordObject.kanji_word;
+      case 'hiragana':
+        return wordObject.hiragana_or_katakana;
+      case 'romanji':
+        return wordObject.romanji_word;
+      default:
+        return '';
+    }
   };
 
-  const initializeAvailableWords = () => {
+  const getCorrectPhrase = () => {
     const { displayMode, content } = props;
-    return displayMode === 'kanji'
-      ? content.correctWordsKatakana
-      : displayMode === 'hiragana'
-      ? content.correctsWordsHiraganaKanji
-      : content.correctWordsRomanji;
+    const phrase = (() => {
+      switch (displayMode) {
+        case 'kanji':
+          return content.colocateWords.correctKanji;
+        case 'hiragana':
+          return content.colocateWords.correctHiraganaKatakana;
+        case 'romanji':
+          return content.colocateWords.correctRomanji;
+        default:
+          return '';
+      }
+    })();
+    return phrase;
   };
 
   const handleWordRemove = (index) => {
-    if (remainingChanges > 0 && sentence[index] !== '') {
-      const updatedSentence = [...sentence];
-      const removedWord = updatedSentence[index];
+    if (state.remainingChanges > 0 && !state.sentence[index].isEmpty) {
+      const updatedSentence = [...state.sentence];
+      const removedWordObject = updatedSentence[index].wordObject;
 
-      updatedSentence[index] = '';
-      setSentence(updatedSentence);
-      setRemovedWords([...removedWords, removedWord]);
+      updatedSentence[index] = { wordObject: null, isEmpty: true };
 
-      const newRemainingChanges = remainingChanges - 1;
-      setRemainingChanges(newRemainingChanges);
-
-      if (newRemainingChanges === 0) {
-        setIsResetVisible(true);
-        startProgress();
-      }
+      setState((prevState) => ({
+        ...prevState,
+        sentence: updatedSentence,
+        removedWords: [...prevState.removedWords, removedWordObject],
+        remainingChanges: prevState.remainingChanges - 1,
+      }));
     }
   };
 
-  const handleWordAdd = (word) => {
-    if (remainingChanges > 0) {
-      const emptyIndex = sentence.indexOf('');
+  const handleWordAdd = (wordObject) => {
+    if (state.remainingChanges > 0) {
+      const emptyIndex = state.sentence.findIndex((item) => item.isEmpty);
+  
       if (emptyIndex !== -1) {
-        const updatedSentence = [...sentence];
-        updatedSentence[emptyIndex] = word;
-
-        const updatedRemovedWords = removedWords.filter(w => w !== word);
-        const updatedAvailableWords = availableWords.filter(w => w !== word);
-
-        setSentence(updatedSentence);
-        setRemovedWords(updatedRemovedWords);
-        setAvailableWords(updatedAvailableWords);
-
-        const newRemainingChanges = remainingChanges - 1;
-        setRemainingChanges(newRemainingChanges);
-
-        if (newRemainingChanges === 0) {
-          setIsResetVisible(true);
-          startProgress();
-        }
+        const updatedSentence = [...state.sentence];
+        updatedSentence[emptyIndex] = { wordObject, isEmpty: false };
+  
+        const updatedRemovedWords = state.removedWords.filter(
+          (w) =>
+            !(
+              w.kanji_word === wordObject.kanji_word &&
+              w.hiragana_or_katakana === wordObject.hiragana_or_katakana &&
+              w.romanji_word === wordObject.romanji_word
+            )
+        );
+  
+        const updatedAvailableWords = state.availableWords.filter(
+          (w) =>
+            !(
+              w.kanji_word === wordObject.kanji_word &&
+              w.hiragana_or_katakana === wordObject.hiragana_or_katakana &&
+              w.romanji_word === wordObject.romanji_word
+            )
+        );
+  
+        setState((prevState) => ({
+          ...prevState,
+          sentence: updatedSentence,
+          removedWords: updatedRemovedWords,
+          availableWords: updatedAvailableWords,
+          remainingChanges: prevState.remainingChanges - 1,
+        }));
       }
     }
   };
+
+  useEffect(() => {
+    if (state.isInitialized && state.remainingChanges === 0 && !state.isBlocked) {
+      startProgress();
+    }
+  }, [state.remainingChanges, state.isInitialized]);
 
   const startProgress = () => {
-    Animated.timing(progress, {
+    setState(prevState => ({
+      ...prevState,
+      isChecking: true,
+      isResetVisible: true
+    }));
+
+    Animated.timing(state.progress, {
       toValue: 1,
       duration: 3000,
       useNativeDriver: false,
     }).start(() => {
-      setIsTimerComplete(true);
-      setShowModal(true);
-      setIsBlocked(true); // Блокування після завершення таймера
+      setState((prevState) => ({
+        ...prevState,
+        isTimerComplete: true,
+        showModal: true,
+        isBlocked: true,
+        hasCompletedOnce: true,
+      }));
+      checkCorrectness();
     });
   };
 
-  const handleModalClose = () => {
-    setShowModal(false);
-    resetExercise();
+  const checkCorrectness = () => {
+    const { displayMode } = props;
+    const filledWords = state.sentence.map(item => item.wordObject).filter(Boolean);
+    const currentSentence = filledWords
+      .map(wordObj => getWordValue(wordObj))
+      .join(displayMode === 'romanji' ? ' ' : '');
+
+    setState((prevState) => ({
+      ...prevState,
+      isCorrect: currentSentence === state.phrase,
+    }));
   };
 
   const resetExercise = () => {
-    progress.setValue(0);
-    setShowModal(false)
-    setIsBlocked(false); // Зняття блокування при скиданні вправи
-    initializeWords();
+    state.progress.setValue(0);
+    setState((prevState) => ({
+      ...prevState,
+      showModal: false,
+      isBlocked: false,
+      isInitialized: false,
+      hasCompletedOnce: false,
+      isChecking: false,
+      isResetVisible: false,
+      isTimerComplete: false
+    }));
+    initializeWords(false, false, false, false, false);
   };
 
-  const progressBarWidth = progress.interpolate({
+  const progressBarWidth = state.progress.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
   });
 
-  const isWordInteractionDisabled = remainingChanges === 0;
+  const isWordInteractionDisabled = state.remainingChanges === 0;
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Sentence Correction</Text>
+      <Text style={styles.header}>Find and Fix Errors</Text>
 
       <Animated.View style={[styles.progressBar, { width: progressBarWidth }]} />
 
       <Text style={styles.needsToBeChanged}>
-        Changes remaining: {remainingChanges}
+        Changes remaining: {state.remainingChanges}
       </Text>
 
       <View style={styles.sentenceContainer}>
-        {sentence.map((word, index) => (
+        {state.sentence.map((item, index) => (
           <TouchableOpacity
             key={index}
             onPress={() => handleWordRemove(index)}
             disabled={isWordInteractionDisabled}
-            style={[
-              styles.wordButton,
-              isWordInteractionDisabled && styles.disabledButton
-            ]}
+            style={[styles.wordButton, isWordInteractionDisabled && styles.disabledButton]}
           >
-            <Text style={styles.word}>{word || '_____'}
+            <Text style={styles.word}>
+              {item.isEmpty ? '_____' : getWordValue(item.wordObject)}
             </Text>
           </TouchableOpacity>
         ))}
@@ -161,56 +237,46 @@ const SentenceCorrectionComponent = (props) => {
       <Text style={styles.subHeader}>Available Words</Text>
 
       <View style={styles.wordsContainer}>
-        {removedWords.map((word, index) => (
+        {state.removedWords.map((wordObject, index) => (
           <TouchableOpacity
-            key={index}
-            onPress={() => handleWordAdd(word)}
+            key={`removed-${index}`}
+            onPress={() => handleWordAdd(wordObject)}
             disabled={isWordInteractionDisabled}
-            style={[
-              styles.wordButton,
-              isWordInteractionDisabled && styles.disabledButton
-            ]}
+            style={[styles.wordButton, isWordInteractionDisabled && styles.disabledButton]}
           >
-            <Text style={styles.word}>{word}</Text>
+            <Text style={styles.word}>{getWordValue(wordObject)}</Text>
           </TouchableOpacity>
         ))}
-        {availableWords.map((word, index) => (
+        {state.availableWords.map((wordObject, index) => (
           <TouchableOpacity
-            key={index}
-            onPress={() => handleWordAdd(word)}
+            key={`available-${index}`}
+            onPress={() => handleWordAdd(wordObject)}
             disabled={isWordInteractionDisabled}
-            style={[
-              styles.wordButton,
-              isWordInteractionDisabled && styles.disabledButton
-            ]}
+            style={[styles.wordButton, isWordInteractionDisabled && styles.disabledButton]}
           >
-            <Text style={styles.word}>{word}</Text>
+            <Text style={styles.word}>{getWordValue(wordObject)}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      {isResetVisible && (
+      {state.isResetVisible && !state.isTimerComplete && (
         <View style={styles.resetWrapper}>
           <TouchableOpacity 
             onPress={resetExercise} 
-            disabled={isTimerComplete}
-            style={[
-              styles.resetButton,
-              isTimerComplete && styles.disabledButton
-            ]}
+            style={styles.resetButton}
           >
             <Text style={styles.resetButtonText}>Reset Exercise</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {showModal && (
+      {state.showModal && (
         <ModalWindow
-          isCorrect={remainingChanges === 0}
-          correctAnswer="NA"
-          description="NA"
-          visible={showModal}
-          setVisible={setShowModal}
+          isCorrect={state.isCorrect}
+          correctAnswer={state.phrase}
+          description={props.content.colocateWords.translation}
+          visible={state.showModal}
+          setVisible={(visible) => setState((prevState) => ({ ...prevState, showModal: visible }))} 
         />
       )}
     </View>
