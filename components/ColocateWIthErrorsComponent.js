@@ -21,6 +21,11 @@ const SentenceCorrectionComponent = (props) => {
   });
 
   useEffect(() => {
+
+    if (state.isChecking || state.hasCompletedOnce) {
+      return;
+    }
+    
     const wasBlocked = state.isBlocked;
     const wasTimerComplete = state.isTimerComplete;
     const hadCompleted = state.hasCompletedOnce;
