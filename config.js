@@ -1,3 +1,3 @@
 export const API_CONFIG = {
-    BASE_URL: 'https://corrected-excel-safer-savage.trycloudflare.com/api',
+    BASE_URL: 'https://police-slowly-medical-further.trycloudflare.com/api',
   };

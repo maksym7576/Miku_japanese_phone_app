@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import * as Font from 'expo-font';
 import QuestionComponent from '../components/QuestionComponent';
 import MediaComponent from '../components/MediaComponent';
@@ -42,37 +40,37 @@ class ExerciseScreen extends Component {
     async loadFonts() {
         await Font.loadAsync({
             'Parkinsans-Regular': require('../assets/fonts/Parkinsans-Medium.ttf'),
-            // 'Parkinsans-Bold': require('../assets\fonts\Parkinsans-SemiBold.ttff'),
         });
         this.setState({ fontsLoaded: true });
     }
 
     handleModalOpen = () => {
-        this.setState({ isSwitchDisabled: true });  // Блокуємо перемикач
+        this.setState({ isSwitchDisabled: true });  
     };
 
-    // Функція для розблокування перемикача після закриття модального вікна
     handleModalClose = () => {
-        this.setState({ isSwitchDisabled: false });  // Розблокуємо перемикач
+        this.setState({ isSwitchDisabled: false });  
     };
     
     switchType = () => {
         const { displayTypes, displayType } = this.state;
         const currentIndex = displayTypes.indexOf(displayType);
-        const nextIndex = (currentIndex + 1) % displayTypes.length; // Зациклене перемикання
+        const nextIndex = (currentIndex + 1) % displayTypes.length; 
         this.setState({ displayType: displayTypes[nextIndex] });
       };
     
-    handleNextContent = () => {
+      handleNextContent = () => {
         this.setState((prevState) => {
-            const nextindex = prevState.currentIndex + 1;
-            this.setState({ progress: 0 });
-            if(nextindex < prevState.contentList.length) {
-                return { currentIndex: nextindex, hasPlayedAudio: false};
+            const nextIndex = prevState.currentIndex + 1;
+            const progress = ((nextIndex + 1) / prevState.contentList.length) * 100;
+    
+            if (nextIndex < prevState.contentList.length) {
+                return { currentIndex: nextIndex, progress };
             }
-            return { currentIndex: prevState.currentIndex };
+            return { currentIndex: prevState.currentIndex, progress: 100 };
         });
     };
+    
 
     componentWillUnmount() {
         if (this.state.sound) {
@@ -80,41 +78,10 @@ class ExerciseScreen extends Component {
         }
     }
     
-    
-
-    
-
-
     renderContent = () => {
         const { contentList, currentIndex, hasPlayedAudio } = this.state;
         const currentContent = contentList[currentIndex];
         const { displayType } = this.state;
-    
-        if (
-            currentContent &&
-            currentContent.type === 'flash_card_popup' &&
-            !hasPlayedAudio
-        ) {
-            setTimeout(() => {
-                currentContent.content.fileRecordsList?.forEach((fileRecord) => {
-                    if (fileRecord.type === "audio") {
-                        this.playAudio(fileRecord.url);
-                    }
-                });
-                this.setState({ hasPlayedAudio: true }); // Встановити прапорець
-            }, 500);
-        }
-    
-        if (
-            currentContent &&
-            currentContent.type === 'explanation_with_phrases' &&
-            !hasPlayedAudio
-        ) {
-            setTimeout(() => {
-                this.playVideo();
-                this.setState({ hasPlayedAudio: true }); // Встановити прапорець
-            }, 500);
-        }
     
         switch (currentContent.type) {
             case 'details':
@@ -200,7 +167,7 @@ class ExerciseScreen extends Component {
                                 question={currentContent.content.object.question}
                                 answers={currentContent.content.object.answer}
                                 displayMode={displayType}
-                                disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
+                                disableSwitch={this.handleModalOpen}
                                 enableSwitch={this.handleModalClose}
                                 onAnswer={(result) => {
                                     this.setState((prevState) => ({
@@ -217,7 +184,7 @@ class ExerciseScreen extends Component {
                                 <ColocateExerciseComponent
                                  content={currentContent.content}
                                  displayMode={displayType}
-                                 disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
+                                 disableSwitch={this.handleModalOpen}  
                                  enableSwitch={this.handleModalClose}
                                  onAnswer={(result) => {
                                     this.setState((prevState) => ({
@@ -233,7 +200,7 @@ class ExerciseScreen extends Component {
                                 <SentenceCorrectionComponent
                                 content={currentContent.content}
                                 displayMode={displayType}
-                                disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
+                                disableSwitch={this.handleModalOpen}  
                                 enableSwitch={this.handleModalClose}
                                 onAnswer={(result) => {
                                     this.setState((prevState) => ({
@@ -261,7 +228,7 @@ class ExerciseScreen extends Component {
                                 question={currentContent.content.object.question}
                                 answers={currentContent.content.object.questionAnswerList}
                                 displayMode="none"
-                                disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
+                                disableSwitch={this.handleModalOpen} 
                                 enableSwitch={this.handleModalClose}
                                 onAnswer={(result) => {
                                     this.setState((prevState) => ({
@@ -277,7 +244,7 @@ class ExerciseScreen extends Component {
                                 <ChooseQuestion
                                 content={currentContent.content}
                                 displayMode={displayType}
-                                disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
+                                disableSwitch={this.handleModalOpen} 
                                 enableSwitch={this.handleModalClose}
                                 onAnswer={(result) => {
                                     this.setState((prevState) => ({
@@ -292,17 +259,9 @@ class ExerciseScreen extends Component {
         }
     };
 
-    handleCloseModal = () => {
-        this.setState({ isModalOpen: false });
-        setVisible(false);
-        AsyncStorage.setItem('isExercise', true);
-    };
-    
-
     handleFinish = () => {
         console.log("Exercise Finished!", this.state.exerciseResults);
     };
-    
 
     render() {
         const { contentList, currentIndex } = this.state;
@@ -325,6 +284,9 @@ class ExerciseScreen extends Component {
                         </TouchableOpacity>
                     </View>
                     <ScrollView style={styles.scrollViewContainer}>
+                    <View style={styles.progressBarContainer}>
+                            <View style={[styles.progressBar, { width: `${this.state.progress}%` }]} />
+                        </View>
                     <View style={styles.exercise}>
                         {this.renderContent()}
                     </View>
@@ -335,8 +297,8 @@ class ExerciseScreen extends Component {
                 {contentList.length > 0 ? (
                 <TouchableOpacity
                 onPress={isLastContent ? this.handleFinish : this.handleNextContent}
-                style={[styles.button, this.state.isSwitchDisabled && styles.disabledButton]} // додавання стилю для неактивної кнопки
-                disabled={this.state.isSwitchDisabled} // заблокувати кнопку, якщо isSwitchDisabled true
+                style={[styles.button, this.state.isSwitchDisabled && styles.disabledButton]} 
+                disabled={this.state.isSwitchDisabled} 
             >
                 <Text style={[styles.buttonText, this.state.isSwitchDisabled && styles.buttonTextDisabled]}>{isLastContent ? 'Finish' : 'Next'}</Text>
             </TouchableOpacity>
@@ -352,13 +314,12 @@ class ExerciseScreen extends Component {
         flex: 1,
         justifyContent: 'flex-start',
         alignItems: 'stretch',
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#ffffff',
     },
     content: {
         flexGrow: 1,
-        marginBottom: 20,
         padding: 20,
-        backgroundColor: '#fff',
+        backgroundColor: '#ffffff',
         borderRadius: 10,
         shadowColor: '#000',
         shadowOpacity: 0.1,
@@ -367,24 +328,42 @@ class ExerciseScreen extends Component {
         elevation: 2,
         alignItems: 'center',
     },
+    progressBarContainer: {
+        marginTop: 17,
+        marginBottom: -20,
+        height: 8, // Adjusted height for better visibility
+        backgroundColor: '#e0e0e0',
+        borderRadius: 6, // Slightly rounded edges for a smoother look
+        marginHorizontal: 80,
+        alignItems: 'left',
+        justifyContent: 'center', // To center the percentage text inside the progress bar
+    },
+    progressBar: {
+        height: '100%',
+        backgroundColor: '#007AFF',
+        borderRadius: 6, // Same as container for consistency
+        width: '0%', // Starting width, will change dynamically
+        transition: 'width 0.3s ease-out', // Smooth transition when width changes
+        transform: [{ translateX: 0 }], // The bar will appear to move from left to right
+    },
     exercise: {
         marginTop: 25,
     },
     disabledButton: {
-        position: 'absolute', // Абсолютне позиціонування
-        bottom: 0, // Прикріплення до самого низу
-        left: 0, // Від лівого краю
-        right: 0, // До правого краю
-        fontSize: 21, // Розмір шрифту
+        position: 'absolute', 
+        bottom: 0,
+        left: 0,
+        right: 0, 
+        fontSize: 21,
         fontFamily: 'Parkinsans-Regular',
-        textAlign: 'center', // Центрування по горизонталі
-        backgroundColor: '#525252', // Колір фону (опціонально)
-        color: '#ffffff', // Колір тексту
-        paddingVertical: 10, // Вертикальний внутрішній відступ
-        paddingHorizontal: 10 // Горизонтальний внутрішній відступ
+        textAlign: 'center', 
+        backgroundColor: '#525252',
+        color: '#ffffff', 
+        paddingVertical: 10,
+        paddingHorizontal: 10 
     },
     scrollViewContainer: {
-        flex: 1,  // Це дозволить прокручувати вміст
+        flex: 1, 
     },
     switch: {
         position: 'absolute',
@@ -400,41 +379,22 @@ class ExerciseScreen extends Component {
         borderRadius: 10,
         backgroundColor: '#007AFF',
         flexDirection: 'row',
-        alignItems: 'center',  // вирівнює по вертикалі
-        justifyContent: 'center',  // вирівнює по горизонталі
-        elevation: 3,  // для тіні при натисканні
+        alignItems: 'center', 
+        justifyContent: 'center',  
+        elevation: 3,  
     },
     icon: {
         width: 20,
         height: 20,
         marginRight: 8,
         tintColor: '#ffffff',
-        alignSelf: 'center',  // вирівнює по вертикалі в середині контейнера
+        alignSelf: 'center',  
     },
     textSwitch: {
         color: '#fff',
         fontSize: 16,
         fontWeight: 'bold',
     },
-    // button: {
-    //     position: 'absolute',
-    //     bottom: 0,
-    //     left: 0,
-    //     right: 0,
-    //     backgroundColor: '#28a745',
-    //     paddingVertical: 12,
-    //     paddingHorizontal: 30,
-    //     borderRadius: 8,
-    //     alignItems: 'center',
-    //     justifyContent: 'center',
-    //     marginTop: 20,
-    //     elevation: 3,
-    // },
-    // buttonText: {
-    //     color: '#fff',
-    //     fontSize: 18,
-    //     fontWeight: 'bold',
-    // },
         title: {
             fontSize: 21,
             fontWeight: 'bold',
@@ -474,22 +434,19 @@ class ExerciseScreen extends Component {
             fontFamily: 'Parkinsans-Regular',
         },
         button: {
-        position: 'absolute', // Абсолютне позиціонування
-        bottom: 0, // Прикріплення до самого низу
-        left: 0, // Від лівого краю
-        right: 0, // До правого краю
-        fontSize: 21, // Розмір шрифту
+        position: 'absolute', 
+        bottom: 0,
+        left: 0, 
+        right: 0, 
+        fontSize: 21, 
         fontFamily: 'Parkinsans-Regular',
-        textAlign: 'center', // Центрування по горизонталі
-        backgroundColor: '#007AFF', // Колір фону (опціонально)
-        color: '#ffffff', // Колір тексту
-        paddingVertical: 10, // Вертикальний внутрішній відступ
-        paddingHorizontal: 10 // Горизонтальний внутрішній відступ
+        textAlign: 'center',
+        backgroundColor: '#007AFF', 
+        color: '#ffffff', 
+        paddingVertical: 10, 
+        paddingHorizontal: 10,
+        zIndex: 1,
     },
-        buttonText: {
-            color: '#fff',
-            frontSize: 16,
-        },
         row: {
             flexDirection: 'row',
             borderBottomWidth: 1,
@@ -515,140 +472,66 @@ class ExerciseScreen extends Component {
             frontWeight: 'bold',
             color: '#333',
         },
-        stopButtonText: {
-            color: '#fff',
-            fontSize: 18,
-            fontWeight: 'bold',
-        },
-        imageContainer: {
-            width: '100%',
-            aspectRatio: 16 / 9, // Фіксує співвідношення 16:9
-            justifyContent: 'center',
-            alignItems: 'center',
-            position: 'relative',
-            backgroundColor: '#ddd', // Запасний фон на випадок відсутності зображення
-            marginBottom: 20, // Відступи між зображенням та іншими елементами
-        },
-        // Стиль для зображення
-        image: {
-            width: '100%',
-            height: '100%',
-            resizeMode: 'cover', // Зображення займає весь простір, зберігаючи пропорції
-        },
-        // Контейнер для аудіо та кнопок
-        audioContainer: {
-            position: 'absolute',
-            bottom: 10, // Розміщення елементів у нижній частині контейнера
-            left: 0,
-            right: 0,
-            alignItems: 'center',
-        },
-        // Кнопка відтворення/зупинки
-        stopButton: {
-            position: 'absolute',
-            left: 10, // Розташування кнопки зліва
-            bottom: 10, // Відступ знизу
-            width: 60,
-            height: 60,
-            justifyContent: 'center',
-            alignItems: 'center',
-            borderRadius: 30, // Кругла форма кнопки
-            backgroundColor: '#ff5252',
-        },
-        stopButtonText: {
-            color: '#fff',
-            fontSize: 16,
-            fontWeight: 'bold',
-        },
-        // Прогрес-бар
-        progressOverlay: {
-            width: '100%',
-            height: 8,
-            backgroundColor: 'rgba(0, 0, 0, 0.3)',
-            borderRadius: 4,
-            overflow: 'hidden',
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-        },
-        progressBar: {
-            height: '100%',
-            backgroundColor: '#4caf50',
-        },
         centeredContainer: {
-            flex: 1,                     // Займає весь доступний простір
-            justifyContent: 'flex-start', // Розташовує контент зверху
-            alignItems: 'center',        // Центрує по горизонталі            
-            paddingHorizontal: 10,       // Відступи по боках
-            backgroundColor: 'transparent', // Прозорий фон контейнера
+            flex: 1,                    
+            justifyContent: 'flex-start', 
+            alignItems: 'center',              
+            paddingHorizontal: 10,    
+            backgroundColor: 'transparent', 
         },
           textHiragana: {
-            fontSize: 14, // Prominent size
-            color: '#000', // Dark, clear color
-            fontWeight: '600', // Bold to draw attention
-            opacity: 1, // Full opacity
+            fontSize: 14,
+            color: '#000',
+            fontWeight: '600',
+            opacity: 1, 
           },
           textKanji: {
-            fontSize: 12, // Smaller than hiragana
-            color: '#666', // Less prominent color
-            opacity: 0.7, // Slightly transparent
+            fontSize: 12, 
+            color: '#666',
+            opacity: 0.7, 
           },
           textRomanji: {
-            fontSize: 12, // Same size as kanji
-            color: '#666', // Less prominent color
-            opacity: 0.7, // Slightly transparent
+            fontSize: 12, 
+            color: '#666',
+            opacity: 0.7,
             fontStyle: 'italic',
           },
           translationContainer: {
-            flexDirection: 'row', // Inline with hiragana/katakana
+            flexDirection: 'row',
             alignItems: 'center',
           },
           phraseContainer: {
-            marginBottom: 10, // Space between phrases
+            marginBottom: 10, 
             padding: 5,
           },
           containerPhrase: {
             alignItems: 'center',
           },
-          videoContainer: {
-            width: '100%', // Контейнер розтягується на ширину екрану
-            height: 'auto', // Висота буде автоматичною
-            aspectRatio: 16 / 9, // Підтримує пропорції 16:9
-            backgroundColor: 'black', // Колір фону для контейнера
-            justifyContent: 'center',
-            alignItems: 'center',
-            overflow: 'hidden', // Запобігає виступанню відео за межі контейнера
-          },
-          video: {
-            width: '100%', // Ширина відео розтягується по контейнеру
-            height: '100%', // Висота відео буде відповідати контейнеру
-            objectFit: 'contain', // Для браузера: підтримує пропорції без обрізання
-          },
           buttonText: {
-            position: 'absolute', // Абсолютне позиціонування
-            bottom: 0, // Прикріплення до самого низу
-            left: 0, // Від лівого краю
-            right: 0, // До правого краю
-            fontSize: 21, // Розмір шрифту
+            position: 'absolute', 
+            bottom: 0, 
+            left: 0, 
+            right: 0,
+            fontSize: 21, 
             fontFamily: 'Parkinsans-Regular',
-            textAlign: 'center', // Центрування по горизонталі
-            backgroundColor: '#007AFF', // Колір фону (опціонально)
-            color: '#ffffff', // Колір тексту
-            paddingVertical: 10, // Вертикальний внутрішній відступ
-            paddingHorizontal: 10 // Горизонтальний внутрішній відступ
+            textAlign: 'center', 
+            backgroundColor: '#007AFF',
+            color: '#ffffff', 
+            paddingVertical: 10,
+            paddingHorizontal: 10 
           },
           buttonTextDisabled: {
-            position: 'absolute', // Абсолютне позиціонування
-            bottom: 0, // Прикріплення до самого низу
-            left: 0, // Від лівого краю
-            right: 0, // До правого краю
-            fontSize: 21, // Розмір шрифту
+            position: 'absolute', 
+            bottom: 0,
+            left: 0, 
+            right: 0, 
+            fontSize: 21,
             fontFamily: 'Parkinsans-Regular',
-            textAlign: 'center', // Центрування по горизонталі
-            backgroundColor: '#525252', // Колір фону (опціонально)
-            color: '#ffffff', // Колір тексту
-            paddingVertical: 10, // Вертикальний внутрішній відступ
-            paddingHorizontal: 10 // Горизонтальний внутрішній відступ
+            textAlign: 'center', 
+            backgroundColor: '#525252',
+            color: '#ffffff', 
+            paddingVertical: 10, 
+            paddingHorizontal: 10 
           },
     })
 
