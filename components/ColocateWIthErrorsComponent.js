@@ -190,12 +190,30 @@ const SentenceCorrectionComponent = (props) => {
     const currentSentence = filledWords
       .map(wordObj => getWordValue(wordObj))
       .join(displayMode === 'romanji' ? ' ' : '');
-
+  
+    const isCorrect = currentSentence === state.phrase;
+  
+    // Оновлення стану isCorrect
     setState((prevState) => ({
       ...prevState,
-      isCorrect: currentSentence === state.phrase,
+      isCorrect,
     }));
   };
+  
+  // Використовуємо useEffect для виконання побічних ефектів після зміни isCorrect
+  useEffect(() => {
+    if (props.onAnswer && state.isCorrect !== null && state.isInitialized) {
+      props.onAnswer({
+        id: props.content.colocateWords.textId,
+        isCorrect: state.isCorrect,
+      });
+      console.log({
+        id: props.content.colocateWords.textId,
+        isCorrect: state.isCorrect,
+      });
+    }
+  }, [state.isCorrect]); // Хук буде спрацьовувати при зміні state.isCorrect
+  
 
   const resetExercise = () => {
     state.progress.setValue(0);

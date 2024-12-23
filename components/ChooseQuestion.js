@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import ModalWindow from './ModalWindow';
 
-const ChooseQuestion = ({ content, displayMode, setDisplayMode, disableSwitch, enableSwitch  }) => {
+const ChooseQuestion = ({ content, displayMode, setDisplayMode, disableSwitch, enableSwitch, onAnswer }) => {
   const { question, miniQuestionDTO, textList } = content;
   const [placedAnswers, setPlacedAnswers] = useState({});
   const [availableWords, setAvailableWords] = useState(textList);
@@ -56,11 +56,15 @@ const ChooseQuestion = ({ content, displayMode, setDisplayMode, disableSwitch, e
       const userAnswer = placedAnswers[miniQuestion.textId]?.id;
       return userAnswer === miniQuestion.textId;
     });
-
+  
     setIsCorrect(allCorrect);
     setIsBlocked(true); // Блокування після перевірки
     setShowModal(true);
+  
+    // Виклик onAnswer після обчислення allCorrect
+    onAnswer({ id: content.question.id, isCorrect: allCorrect });
   };
+  
 
   const getDisplayKey = (mode) => {
     switch (mode) {

@@ -30,6 +30,7 @@ class ExerciseScreen extends Component {
             progress: 0,
             hasPlayedAudio: false,
             isSwitchDisabled: false, 
+            exerciseResults: [], 
         };
     }
 
@@ -201,6 +202,11 @@ class ExerciseScreen extends Component {
                                 displayMode={displayType}
                                 disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
                                 enableSwitch={this.handleModalClose}
+                                onAnswer={(result) => {
+                                    this.setState((prevState) => ({
+                                        exerciseResults: [...prevState.exerciseResults, result],
+                                    }));
+                                }}
                                 />
                             </View>
                         );
@@ -213,6 +219,11 @@ class ExerciseScreen extends Component {
                                  displayMode={displayType}
                                  disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
                                  enableSwitch={this.handleModalClose}
+                                 onAnswer={(result) => {
+                                    this.setState((prevState) => ({
+                                        exerciseResults: [...prevState.exerciseResults, result],
+                                    }));
+                                }}
                                 />
                             </View>
                         );
@@ -224,6 +235,11 @@ class ExerciseScreen extends Component {
                                 displayMode={displayType}
                                 disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
                                 enableSwitch={this.handleModalClose}
+                                onAnswer={(result) => {
+                                    this.setState((prevState) => ({
+                                        exerciseResults: [...prevState.exerciseResults, result],
+                                    }));
+                                }}
                                 />
                             </View>
                         );
@@ -247,6 +263,11 @@ class ExerciseScreen extends Component {
                                 displayMode="none"
                                 disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
                                 enableSwitch={this.handleModalClose}
+                                onAnswer={(result) => {
+                                    this.setState((prevState) => ({
+                                        exerciseResults: [...prevState.exerciseResults, result],
+                                    }));
+                                }}
                                 />
                             </View>
                         );
@@ -258,6 +279,11 @@ class ExerciseScreen extends Component {
                                 displayMode={displayType}
                                 disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
                                 enableSwitch={this.handleModalClose}
+                                onAnswer={(result) => {
+                                    this.setState((prevState) => ({
+                                        exerciseResults: [...prevState.exerciseResults, result],
+                                    }));
+                                }}
                                 />
                             </View>
                         )                
@@ -274,10 +300,9 @@ class ExerciseScreen extends Component {
     
 
     handleFinish = () => {
-        // Logic to handle finishing the exercise
-        console.log("Exercise Finished!");
-        // You can navigate to another screen or show a modal, etc.
+        console.log("Exercise Finished!", this.state.exerciseResults);
     };
+    
 
     render() {
         const { contentList, currentIndex } = this.state;

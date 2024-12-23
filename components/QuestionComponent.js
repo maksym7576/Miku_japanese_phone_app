@@ -1,12 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Image } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
-import correctIcon from '../assets/isCorrectsStates/miku_ok.png'; 
-import incorrectIcon from '../assets/isCorrectsStates/miku_not.png';
 import ModalWindow from './ModalWindow';
 
-const QuestionComponent = ({ question, answers, displayMode, disableSwitch, enableSwitch }) => {
+const QuestionComponent = ({ question, answers, displayMode, disableSwitch, enableSwitch, onAnswer }) => {
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [isButtonDisabled, setIsButtonDisabled] = useState(false);
     const [answerHistory, setAnswerHistory] = useState([]);
@@ -48,6 +45,7 @@ const QuestionComponent = ({ question, answers, displayMode, disableSwitch, enab
         setSelectedAnswer(selected);
         setIsButtonDisabled(true);
         const isCorrect = selected.correct;
+        onAnswer({ id: question.id, isCorrect });
         const answerRecord = {
             questionId: question.id,
             answerId: selected.id,
@@ -66,10 +64,6 @@ const QuestionComponent = ({ question, answers, displayMode, disableSwitch, enab
 
     const findCorrectAnswer = () => {
         return answers?.find((item) => item.correct);
-    };
-
-    const handleCloseModal = () => {
-        setShowModal(false);
     };
 
     const getDisplayedAnswer = (answer) => {

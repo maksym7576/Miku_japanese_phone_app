@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import ModalWindow from './ModalWindow';
 
-const ColocateExerciseComponent = ({ content, displayMode, disableSwitch, enableSwitch  }) => {
+const ColocateExerciseComponent = ({ content, displayMode, disableSwitch, enableSwitch, onAnswer }) => {
   const [selectedWords, setSelectedWords] = useState([]);
   const [remainingWords, setRemainingWords] = useState([]);
   const [phrase, setPhase] = useState('');
@@ -133,14 +133,20 @@ const ColocateExerciseComponent = ({ content, displayMode, disableSwitch, enable
       default:
         correctAnswer = content.object.colocateWordsDTO.correctKanji;
     }
-
+  
     const userAnswer = finalSelectedWords.join('');
     const userRomanjiAnswer = finalSelectedWords.join(' ');
-    
+  
+    const isCorrect = userAnswer === correctAnswer || userRomanjiAnswer === correctAnswer;
     setIsButtonDisabled(true);
-    setIsCorrectAnswer(userAnswer === correctAnswer || userRomanjiAnswer === correctAnswer);
+    setIsCorrectAnswer(isCorrect); // Зберігаємо у стані для інших компонентів
+  
+    // Виклик onAnswer з правильним значенням
+    onAnswer({ id: content.object.question.id, isCorrect });
+    console.log({ id: content.object.question.id, isCorrect });
     setShowModal(true);
   };
+  
 
   return (
     <View style={styles.container}>
