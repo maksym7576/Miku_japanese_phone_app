@@ -1,188 +1,242 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import ModalWindow from './ModalWindow';
 
-const ChooseQuestion = ({ content }) => {
-    const [userAnswers, setUserAnswers] = useState({});
-    const [showModal, setShowModal] = useState(false);
-    const [isCorrect, setIsCorrect] = useState(false);
+const ChooseQuestion = ({ content, displayMode, setDisplayMode, disableSwitch, enableSwitch  }) => {
+  const { question, miniQuestionDTO, textList } = content;
+  const [placedAnswers, setPlacedAnswers] = useState({});
+  const [availableWords, setAvailableWords] = useState(textList);
+  const [selectedWord, setSelectedWord] = useState(null);
+  const [isBlocked, setIsBlocked] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
 
-    const { question, miniQuestionDTO, textList } = content;
+  useEffect(() => {
+    const usedWordIds = Object.values(placedAnswers).map((word) => word?.id);
+    setAvailableWords(textList.filter((word) => !usedWordIds.includes(word.id)));
+  }, [placedAnswers]);
+  
+      useEffect(() => {
+          disableSwitch();  // Блокуємо перемикач, коли завдання активне
+      }, []);
 
-    const handleSelectWord = (miniQuestionId, selectedWord) => {
-        setUserAnswers((prev) => ({
-            ...prev,
-            [miniQuestionId]: selectedWord,
-        }));
-    };
+  const handleWordSelect = (word) => {
+    if (isBlocked) return;
+    setSelectedWord((prev) => (prev?.id === word.id ? null : word));
+  };
 
-    const checkAnswers = () => {
-        let correct = true;
-        miniQuestionDTO.forEach(({ textId, miniQuestion }) => {
-            const correctAnswer = textList.find((text) => text.id === textId);
-            if (userAnswers[miniQuestion] !== correctAnswer?.kanji_word) {
-                correct = false;
-            }
-        });
+  const handleWordPlace = (textId) => {
+    if (isBlocked || !selectedWord) return;
+    setPlacedAnswers((prev) => ({
+      ...prev,
+      [textId]: selectedWord,
+    }));
+    setSelectedWord(null);
+  };
 
-        setIsCorrect(correct);
-        setShowModal(true);
-    };
+  const handleWordReturn = (textId) => {
+    if (isBlocked) return;
+    const wordToReturn = placedAnswers[textId];
+    setPlacedAnswers((prev) => {
+      const updated = { ...prev };
+      delete updated[textId];
+      return updated;
+    });
+    setAvailableWords((prev) => [...prev, wordToReturn]);
+  };
 
-    const resetAnswers = () => {
-        setUserAnswers({});
-    };
+  useEffect(() => {
+    if (Object.keys(placedAnswers).length === miniQuestionDTO.length) {
+      validateAnswers();
+    }
+  }, [placedAnswers]);
 
-    return (
-        <View style={styles.container}>
-            <Text style={styles.questionText}>{question.question}</Text>
-            <Text style={styles.descriptionText}>{question.description}</Text>
+  const validateAnswers = () => {
+    const allCorrect = miniQuestionDTO.every((miniQuestion) => {
+      const userAnswer = placedAnswers[miniQuestion.textId]?.id;
+      return userAnswer === miniQuestion.textId;
+    });
 
-            {miniQuestionDTO.map(({ miniQuestion, textId }) => (
-                <View key={textId} style={styles.questionBlock}>
-                    <Text style={styles.miniQuestionText}>{miniQuestion}</Text>
-                    <View style={styles.answerBox}>
-                        <Text style={styles.answerText}>
-                            {userAnswers[miniQuestion] || '________'}
-                        </Text>
-                    </View>
-                </View>
-            ))}
+    setIsCorrect(allCorrect);
+    setIsBlocked(true); // Блокування після перевірки
+    setShowModal(true);
+  };
 
-            <View style={styles.wordOptions}>
-                {textList.map((word) => (
-                    <TouchableOpacity
-                        key={word.id}
-                        style={styles.wordButton}
-                        onPress={() => handleSelectWord(word.id, word.kanji_word)}
-                    >
-                        <Text style={styles.wordText}>{word.kanji_word}</Text>
-                    </TouchableOpacity>
-                ))}
-            </View>
+  const getDisplayKey = (mode) => {
+    switch (mode) {
+      case 'kanji':
+        return 'kanji_word';
+      case 'hiragana':
+        return 'hiragana_or_katakana';
+      case 'romanji':
+        return 'romanji_word';
+      default:
+        return 'translation';
+    }
+  };
 
-            <View style={styles.buttonsContainer}>
-                <TouchableOpacity style={styles.checkButton} onPress={checkAnswers}>
-                    <Text style={styles.buttonText}>Check Answers</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.resetButton} onPress={resetAnswers}>
-                    <Text style={styles.buttonText}>Reset</Text>
-                </TouchableOpacity>
-            </View>
-
-            <Modal
-                visible={showModal}
-                transparent={true}
-                animationType="slide"
-                onRequestClose={() => setShowModal(false)}
+  return (
+    <View style={styles.container}>
+      <Text style={styles.questionText}>{question.question}</Text>
+  
+      <View style={styles.gameContainer}>
+  
+        {/* Questions and answer slots */}
+        <View style={styles.questionsGridContainer}>
+        <View style={styles.questionsGridContainer}>
+          {miniQuestionDTO.map((miniQuestion) => (
+            <TouchableOpacity
+              key={miniQuestion.textId}
+              style={styles.questionRow}
+              onPress={() =>
+                placedAnswers[miniQuestion.textId]
+                  ? handleWordReturn(miniQuestion.textId)
+                  : handleWordPlace(miniQuestion.textId)
+              }
             >
-                <View style={styles.modalBackground}>
-                    <View style={styles.modalContainer}>
-                        <Text style={styles.modalMessage}>
-                            {isCorrect ? 'Correct! 🎉' : 'Some answers are incorrect. Try again!'}
-                        </Text>
-                        <TouchableOpacity
-                            style={styles.closeButton}
-                            onPress={() => setShowModal(false)}
-                        >
-                            <Text style={styles.buttonText}>Close</Text>
-                        </TouchableOpacity>
-                    </View>
-                </View>
-            </Modal>
+              {/* Question text */}
+              <Text style={styles.miniQuestionText}>
+                {miniQuestion.miniQuestion}
+              </Text>
+  
+              {/* Answer slot */}
+              <View
+                style={[
+                  styles.answerSlot,
+                  placedAnswers[miniQuestion.textId] && styles.filledAnswerSlot,
+                ]}
+              >
+                <Text style={styles.answerText}>
+                  {placedAnswers[miniQuestion.textId]?.[getDisplayKey(displayMode)] ||
+                    'Place your answer here'}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+                  <View style={styles.wordsContainer}>
+          {availableWords.map((word) => (
+            <TouchableOpacity
+              key={word.id}
+              style={[
+                styles.wordButton,
+                selectedWord?.id === word.id && styles.selectedWordButton,
+              ]}
+              onPress={() => handleWordSelect(word)}
+            >
+              <Text style={styles.wordText}>{word[getDisplayKey(displayMode)]}</Text>
+            </TouchableOpacity>
+          ))}
+          </View>
         </View>
-    );
+        </View>
+      </View>
+  
+      {showModal && (
+        <ModalWindow
+          isCorrect={isCorrect}
+          correctAnswer={isCorrect ? 'All answers are correct!' : 'Some answers are incorrect.'}
+          description={question.description}
+          visible={showModal}
+          setVisible={setShowModal}
+          onClose={enableSwitch}
+        />
+      )}
+    </View>
+  );
 };
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        padding: 20,
-        backgroundColor: '#f9f9f9',
-    },
-    questionText: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    descriptionText: {
-        fontSize: 16,
-        marginBottom: 20,
-        color: '#666',
-    },
-    questionBlock: {
-        marginBottom: 20,
-    },
-    miniQuestionText: {
-        fontSize: 16,
-        marginBottom: 5,
-    },
-    answerBox: {
-        borderWidth: 1,
-        borderColor: '#ccc',
-        padding: 10,
-        borderRadius: 5,
-        backgroundColor: '#fff',
-    },
-    answerText: {
-        fontSize: 16,
-        color: '#333',
-    },
-    wordOptions: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        marginTop: 20,
-    },
-    wordButton: {
-        backgroundColor: '#e0e0e0',
-        padding: 10,
-        margin: 5,
-        borderRadius: 5,
-    },
-    wordText: {
-        fontSize: 16,
-        color: '#333',
-    },
-    buttonsContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginTop: 20,
-    },
-    checkButton: {
-        backgroundColor: '#4caf50',
-        padding: 10,
-        borderRadius: 5,
-    },
-    resetButton: {
-        backgroundColor: '#f44336',
-        padding: 10,
-        borderRadius: 5,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-    },
-    modalBackground: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    modalContainer: {
-        backgroundColor: 'white',
-        padding: 20,
-        borderRadius: 10,
-        alignItems: 'center',
-    },
-    modalMessage: {
-        fontSize: 18,
-        marginBottom: 20,
-    },
-    closeButton: {
-        backgroundColor: '#007bff',
-        padding: 10,
-        borderRadius: 5,
-    },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#f8f8f8',
+  },
+  questionText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 8,
+    textAlign: 'left',
+    flexWrap: 'wrap',
+    marginRight: 8,
+  },
+  gameContainer: {
+    flex: 1,
+  },
+  questionsGridContainer: {
+    flex: 1,
+    justifyContent: 'flex-start',
+    width: '100%',
+    paddingHorizontal: 0,
+  },
+  questionRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+    gap: 16,
+    width: '100%',
+  },
+  miniQuestionText: {
+    fontSize: 18,
+    color: '#444',
+    paddingRight: 8,
+    textAlign: 'left',
+    flexShrink: 1,
+    flexWrap: 'wrap',
+    width: '60%',
+    minWidth: 120,
+    maxWidth: '60%', // Adjust maxWidth to use the available space
+  },
+  answerSlot: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 12,
+    borderRadius: 4,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: 48,
+    minWidth: 120,
+    maxWidth: 180,
+    marginBottom: 8,
+  },
+  filledAnswerSlot: {
+    backgroundColor: '#e0f7fa',
+  },
+  answerText: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+  wordsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    padding: 4,
+    gap: 4,
+    justifyContent: 'space-between',
+  },
+  wordButton: {
+    backgroundColor: '#e0e0e0',
+    padding: 16,
+    borderRadius: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '48%',
+    marginBottom: 8,
+  },
+  selectedWordButton: {
+    backgroundColor: '#bbdefb',
+  },
+  wordText: {
+    color: '#333',
+    fontSize: 14,
+    textAlign: 'center',
+    flexWrap: 'wrap',  // Allows the text to wrap if needed
+  },
 });
 
 export default ChooseQuestion;

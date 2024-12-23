@@ -20,6 +20,7 @@ const SentenceCorrectionComponent = (props) => {
     isChecking: false,
   });
 
+
   useEffect(() => {
 
     if (state.isChecking || state.hasCompletedOnce) {
@@ -33,7 +34,7 @@ const SentenceCorrectionComponent = (props) => {
     const wasChecking = state.isChecking;
     
     initializeWords(wasBlocked, wasTimerComplete, hadCompleted, wasShowingModal, wasChecking);
-  }, [props.displayMode, props.content]);
+  }, [props.displayMode, props.content, props.disableSwitch, props.enableSwitch]);
 
   const initializeWords = (wasBlocked, wasTimerComplete, hadCompleted, wasShowingModal, wasChecking) => {
     const { content } = props;
@@ -63,6 +64,10 @@ const SentenceCorrectionComponent = (props) => {
       isChecking: wasChecking
     }));
   };
+
+  useEffect(() => {
+    props.disableSwitch();  // Блокуємо перемикач, коли завдання активне
+}, []);
 
   const getWordValue = (wordObject) => {
     const { displayMode } = props;
@@ -282,6 +287,7 @@ const SentenceCorrectionComponent = (props) => {
           description={props.content.colocateWords.translation}
           visible={state.showModal}
           setVisible={(visible) => setState((prevState) => ({ ...prevState, showModal: visible }))} 
+          onClose={props.enableSwitch}
         />
       )}
     </View>

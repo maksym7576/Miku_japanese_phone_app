@@ -29,6 +29,7 @@ class ExerciseScreen extends Component {
             isPlating: false,
             progress: 0,
             hasPlayedAudio: false,
+            isSwitchDisabled: false, 
         };
     }
 
@@ -44,6 +45,15 @@ class ExerciseScreen extends Component {
         });
         this.setState({ fontsLoaded: true });
     }
+
+    handleModalOpen = () => {
+        this.setState({ isSwitchDisabled: true });  // Блокуємо перемикач
+    };
+
+    // Функція для розблокування перемикача після закриття модального вікна
+    handleModalClose = () => {
+        this.setState({ isSwitchDisabled: false });  // Розблокуємо перемикач
+    };
     
     switchType = () => {
         const { displayTypes, displayType } = this.state;
@@ -68,6 +78,7 @@ class ExerciseScreen extends Component {
             this.state.sound.unloadAsync();
         }
     }
+    
     
 
     
@@ -188,6 +199,8 @@ class ExerciseScreen extends Component {
                                 question={currentContent.content.object.question}
                                 answers={currentContent.content.object.answer}
                                 displayMode={displayType}
+                                disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
+                                enableSwitch={this.handleModalClose}
                                 />
                             </View>
                         );
@@ -198,6 +211,8 @@ class ExerciseScreen extends Component {
                                 <ColocateExerciseComponent
                                  content={currentContent.content}
                                  displayMode={displayType}
+                                 disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
+                                 enableSwitch={this.handleModalClose}
                                 />
                             </View>
                         );
@@ -207,6 +222,8 @@ class ExerciseScreen extends Component {
                                 <SentenceCorrectionComponent
                                 content={currentContent.content}
                                 displayMode={displayType}
+                                disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
+                                enableSwitch={this.handleModalClose}
                                 />
                             </View>
                         );
@@ -228,6 +245,8 @@ class ExerciseScreen extends Component {
                                 question={currentContent.content.object.question}
                                 answers={currentContent.content.object.questionAnswerList}
                                 displayMode="none"
+                                disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
+                                enableSwitch={this.handleModalClose}
                                 />
                             </View>
                         );
@@ -236,6 +255,9 @@ class ExerciseScreen extends Component {
                             <View>
                                 <ChooseQuestion
                                 content={currentContent.content}
+                                displayMode={displayType}
+                                disableSwitch={this.handleModalOpen}  // Передаємо функцію для блокування
+                                enableSwitch={this.handleModalClose}
                                 />
                             </View>
                         )                
@@ -243,6 +265,13 @@ class ExerciseScreen extends Component {
                     return null;
         }
     };
+
+    handleCloseModal = () => {
+        this.setState({ isModalOpen: false });
+        setVisible(false);
+        AsyncStorage.setItem('isExercise', true);
+    };
+    
 
     handleFinish = () => {
         // Logic to handle finishing the exercise
@@ -279,15 +308,14 @@ class ExerciseScreen extends Component {
                 {this.state.displayedContent.map((item, index) => this.renderContent(item, index))}
                             
                 {contentList.length > 0 ? (
-                    isLastContent ? (
-                        <TouchableOpacity onPress={this.handleFinish} style={styles.button}>
-                            <Text style={styles.buttonText}>Finish</Text>
-                        </TouchableOpacity>
-                    ) : (
-                        <TouchableOpacity onPress={this.handleNextContent} style={styles.button}>
-                            <Text style={styles.buttonText}>Next</Text>
-                        </TouchableOpacity>
-                    )
+                <TouchableOpacity
+                onPress={isLastContent ? this.handleFinish : this.handleNextContent}
+                style={[styles.button, this.state.isSwitchDisabled && styles.disabledButton]} // додавання стилю для неактивної кнопки
+                disabled={this.state.isSwitchDisabled} // заблокувати кнопку, якщо isSwitchDisabled true
+            >
+                <Text style={[styles.buttonText, this.state.isSwitchDisabled && styles.buttonTextDisabled]}>{isLastContent ? 'Finish' : 'Next'}</Text>
+            </TouchableOpacity>
+      
                 ) : null}
             </View>
         );
@@ -316,6 +344,19 @@ class ExerciseScreen extends Component {
     },
     exercise: {
         marginTop: 25,
+    },
+    disabledButton: {
+        position: 'absolute', // Абсолютне позиціонування
+        bottom: 0, // Прикріплення до самого низу
+        left: 0, // Від лівого краю
+        right: 0, // До правого краю
+        fontSize: 21, // Розмір шрифту
+        fontFamily: 'Parkinsans-Regular',
+        textAlign: 'center', // Центрування по горизонталі
+        backgroundColor: '#525252', // Колір фону (опціонально)
+        color: '#ffffff', // Колір тексту
+        paddingVertical: 10, // Вертикальний внутрішній відступ
+        paddingHorizontal: 10 // Горизонтальний внутрішній відступ
     },
     scrollViewContainer: {
         flex: 1,  // Це дозволить прокручувати вміст
@@ -350,25 +391,25 @@ class ExerciseScreen extends Component {
         fontSize: 16,
         fontWeight: 'bold',
     },
-    button: {
-        position: 'absolute',
-        bottom: 0,
-        left: 0,
-        right: 0,
-        backgroundColor: '#28a745',
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 8,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 20,
-        elevation: 3,
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 18,
-        fontWeight: 'bold',
-    },
+    // button: {
+    //     position: 'absolute',
+    //     bottom: 0,
+    //     left: 0,
+    //     right: 0,
+    //     backgroundColor: '#28a745',
+    //     paddingVertical: 12,
+    //     paddingHorizontal: 30,
+    //     borderRadius: 8,
+    //     alignItems: 'center',
+    //     justifyContent: 'center',
+    //     marginTop: 20,
+    //     elevation: 3,
+    // },
+    // buttonText: {
+    //     color: '#fff',
+    //     fontSize: 18,
+    //     fontWeight: 'bold',
+    // },
         title: {
             fontSize: 21,
             fontWeight: 'bold',
@@ -419,13 +460,6 @@ class ExerciseScreen extends Component {
         color: '#ffffff', // Колір тексту
         paddingVertical: 10, // Вертикальний внутрішній відступ
         paddingHorizontal: 10 // Горизонтальний внутрішній відступ
-    },
-    buttonAudio:{
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        backgroundColor: '#007AFF',
-        alightItems: 'center',
-        margin: 10,
     },
         buttonText: {
             color: '#fff',
@@ -577,7 +611,20 @@ class ExerciseScreen extends Component {
             color: '#ffffff', // Колір тексту
             paddingVertical: 10, // Вертикальний внутрішній відступ
             paddingHorizontal: 10 // Горизонтальний внутрішній відступ
-          }
+          },
+          buttonTextDisabled: {
+            position: 'absolute', // Абсолютне позиціонування
+            bottom: 0, // Прикріплення до самого низу
+            left: 0, // Від лівого краю
+            right: 0, // До правого краю
+            fontSize: 21, // Розмір шрифту
+            fontFamily: 'Parkinsans-Regular',
+            textAlign: 'center', // Центрування по горизонталі
+            backgroundColor: '#525252', // Колір фону (опціонально)
+            color: '#ffffff', // Колір тексту
+            paddingVertical: 10, // Вертикальний внутрішній відступ
+            paddingHorizontal: 10 // Горизонтальний внутрішній відступ
+          },
     })
 
 export default ExerciseScreen;

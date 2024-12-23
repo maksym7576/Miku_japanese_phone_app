@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { Modal, View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
-
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import correctIcon from '../assets/isCorrectsStates/miku_ok.png';
 import incorrectIcon from '../assets/isCorrectsStates/miku_not.png';
 
-const ModalWindow = ({ isCorrect, correctAnswer, description, visible, setVisible  }) => {
+const ModalWindow = ({ isCorrect, correctAnswer, description, visible, setVisible, onClose  }) => {
 
-    const handleCloseModal = () => {
+    const handleClose = () => {
         setVisible(false);
+        onClose();  // Викликаємо onClose після закриття модального вікна
     };
 
     return (
@@ -26,7 +27,7 @@ const ModalWindow = ({ isCorrect, correctAnswer, description, visible, setVisibl
                     {description && <Text style={styles.modalMessage}>Explanation: {description}</Text>}
                     <TouchableOpacity
                         style={isCorrect ? styles.continueButtonCorrect : styles.continueButtonError}
-                        onPress={handleCloseModal}
+                        onPress={handleClose}
                     >
                         <Text style={styles.continueText}>Continue</Text>
                     </TouchableOpacity>

@@ -6,13 +6,18 @@ import correctIcon from '../assets/isCorrectsStates/miku_ok.png';
 import incorrectIcon from '../assets/isCorrectsStates/miku_not.png';
 import ModalWindow from './ModalWindow';
 
-const QuestionComponent = ({ question, answers, displayMode }) => {
+const QuestionComponent = ({ question, answers, displayMode, disableSwitch, enableSwitch }) => {
     const [selectedAnswer, setSelectedAnswer] = useState(null);
     const [isButtonDisabled, setIsButtonDisabled] = useState(false);
     const [answerHistory, setAnswerHistory] = useState([]);
     const [showModal, setShowModal] = useState(false);
     const [modalMessage, setModalMessage] = useState('');
     const [isCorrectAnswer, setIsCorrectAnswer] = useState(false);
+
+
+    useEffect(() => {
+        disableSwitch();  // Блокуємо перемикач, коли завдання активне
+    }, []);
 
     useEffect(() => {
         loadStoredData();
@@ -111,6 +116,7 @@ const QuestionComponent = ({ question, answers, displayMode }) => {
                 description={question.description}
                 visible={showModal}
                 setVisible={setShowModal}
+                onClose={enableSwitch}
             />
             )}
         </View>

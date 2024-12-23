@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import ModalWindow from './ModalWindow';
 
-const ColocateExerciseComponent = ({ content, displayMode }) => {
+const ColocateExerciseComponent = ({ content, displayMode, disableSwitch, enableSwitch  }) => {
   const [selectedWords, setSelectedWords] = useState([]);
   const [remainingWords, setRemainingWords] = useState([]);
   const [phrase, setPhase] = useState('');
@@ -11,6 +11,10 @@ const ColocateExerciseComponent = ({ content, displayMode }) => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(false);
   const [currentDisplayMode, setCurrentDisplayMode] = useState(displayMode);
   const [isInitialized, setIsInitialized] = useState(false);
+
+      useEffect(() => {
+          disableSwitch();  // Блокуємо перемикач, коли завдання активне
+      }, []);
 
   useEffect(() => {
     if (!isInitialized) {
@@ -175,6 +179,7 @@ const ColocateExerciseComponent = ({ content, displayMode }) => {
           description={content.object.question.description}
           visible={showModal}
           setVisible={setShowModal}
+          onClose={enableSwitch}
         />
       )}
     </View>
