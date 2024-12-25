@@ -6,6 +6,9 @@ import MediaComponent from '../components/MediaComponent';
 import ColocateExerciseComponent from '../components/ColocateExerciceComponent';
 import SentenceCorrectionComponent from '../components/ColocateWIthErrorsComponent';
 import ChooseQuestion from '../components/ChooseQuestion';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { finishExercise } from '../services/ExerciseService';
+import LessonResultPanel from '../components/LessonResultPanel';
 const kanjiIcon = require('../assets/kanji-icon.png');
 const hiraganaIcon = require('../assets/hiragana-icon.png');
 const romanjiIcon = require('../assets/romanji-icon.png');
@@ -28,6 +31,7 @@ class ExerciseScreen extends Component {
             progress: 0,
             hasPlayedAudio: false,
             isSwitchDisabled: false, 
+            showLessonResults: false,  
             exerciseResults: [], 
         };
     }
@@ -35,6 +39,9 @@ class ExerciseScreen extends Component {
 
     async componentDidMount() {
         await this.loadFonts();
+        if (this.state.contentList.length > 0) {
+            this.setState({ exersiceId: this.state.contentList[0].content.id });
+        }
     }
 
     async loadFonts() {
@@ -259,9 +266,42 @@ class ExerciseScreen extends Component {
         }
     };
 
-    handleFinish = () => {
-        console.log("Exercise Finished!", this.state.exerciseResults);
+    handleFinish = async () => {
+        try {
+            console.log("Exercise Finished!", this.state.exerciseResults);
+    
+            // Отримання userData з AsyncStorage
+            const userDataJson = await AsyncStorage.getItem('userData');
+            const userData = userDataJson ? JSON.parse(userDataJson) : {};
+    
+            // Формування запиту
+            const requestBody = {
+                userId: userData.id, // userId із AsyncStorage
+                exerciseId: this.state.exersiceId, // exerciseId зі стану
+                userResponsesList: this.state.exerciseResults.map(result => ({
+                    questionId: result.id,
+                    isCorrect: result.isCorrect,
+                })),
+            };
+    
+            // Надсилання запиту до бекенду
+            console.log(requestBody);
+            const response = await finishExercise(requestBody);
+            this.setState({showLessonResults: true});
+            this.setState({lessonResults: response})
+            // Логування відповіді від сервера
+            console.log("Response from server:", response);
+    
+            // Тепер ви можете використовувати дані:
+            console.log("Percentage:", response.percentage);
+            console.log("Experience:", response.exp);
+            console.log("Rewards List:", response.rewards);
+    
+        } catch (error) {
+            console.error("Error finishing the exercise:", error);
+        }
     };
+    
 
     render() {
         const { contentList, currentIndex } = this.state;
@@ -270,6 +310,12 @@ class ExerciseScreen extends Component {
     
         return (
             <View style={styles.container}>
+               {this.state.showLessonResults && (
+                    <LessonResultPanel
+                        results={this.state.lessonResults}
+                        onClose={() => this.setState({ showLessonResults: false })}
+                    />
+                )}
                 <View style={styles.content}>
                     <View style={styles.switch}>
                         <TouchableOpacity onPress={this.switchType} style={styles.buttonSwitch}>

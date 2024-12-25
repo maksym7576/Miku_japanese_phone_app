@@ -1,20 +1,48 @@
-import React, { useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, Alert } from 'react-native';
-import { useNavigation } from '@react-navigation/native'; 
-import AsyncStorage from '@react-native-async-storage/async-storage'; 
+import React, { useEffect, useState } from 'react';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    Alert,
+    Animated,
+} from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const LessonResultPanel = ({ results, onClose }) => {
-    const [selectedItem, setSelectedItem] = useState(null);
+const LessonResultPanel = ({ results }) => {
     const navigation = useNavigation();
+    const [progress, setProgress] = useState(new Animated.Value(0)); // Анімація для прогрес-бара
+    const [fadeAnim] = useState(new Animated.Value(0)); // Анімація для появи елементів
 
-    const handleImagePress = (item) => {
-        setSelectedItem(selectedItem === item ? null : item);
+    useEffect(() => {
+        // Анімація появи елементів
+        Animated.timing(fadeAnim, {
+            toValue: 1,
+            duration: 500,
+            useNativeDriver: true,
+        }).start();
+
+        // Анімація прогрес-бара
+        Animated.timing(progress, {
+            toValue: results.percentage,
+            duration: 1000,
+            useNativeDriver: false,
+        }).start();
+    }, [fadeAnim, progress, results.percentage]);
+
+    // Функція для визначення кольору прогрес-бара
+    const getProgressColor = (percentage) => {
+        if (percentage === 100) return '#4caf50'; // Green
+        if (percentage >= 80) return '#2196f3'; // Blue
+        if (percentage >= 60) return '#ffeb3b'; // Yellow
+        return '#f44336'; // Red
     };
 
     const navigateToLessons = async () => {
         try {
-            await AsyncStorage.removeItem('quizResults'); 
-            navigation.navigate('Lessons'); 
+            await AsyncStorage.removeItem('quizResults');
+            navigation.navigate('Lessons');
         } catch (error) {
             Alert.alert('Error', 'Failed to remove quiz results');
         }
@@ -22,51 +50,41 @@ const LessonResultPanel = ({ results, onClose }) => {
 
     return (
         <View style={styles.overlay}>
-            <View style={styles.container}>
-                <Text style={styles.title}>Lesson Results</Text>
-                
-                {results && results.length > 0 ? (
-                    results.map((result, index) => (
-                        <View key={index} style={styles.resultItem}>
-                            {result.type === 'Percentage' && (
-                                <View style={styles.progressContainer}>
-                                    <View style={[styles.progressBar, { width: `${result.reward}%` }]} />
-                                    <View style={[styles.remainingBar, { width: `${100 - result.reward}%` }]} />
-                                    <Text style={styles.progressText}>{result.reward}%</Text>
-                                </View>
-                            )}
-                            
-                            {result.type === 'Experience' && (
-                                <Text style={styles.rewardValue}>Reward: {result.reward} XP</Text>
-                            )}
-                            
-                            {result.type === 'Item' && result.reward && (
-                                <TouchableOpacity onPress={() => handleImagePress(result)}>
-                                    <Image
-                                        source={{ uri: `data:image/jpeg;base64,${result.image.imageData}` }}
-                                        style={styles.rewardImage}
-                                        resizeMode="cover"
-                                    />
-                                </TouchableOpacity>
-                            )}
+            <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+                <Text style={styles.title}>Well done {results.username}!</Text>
 
-                            {selectedItem === result && result.reward && (
-                                <View style={styles.itemDetails}>
-                                    <Text style={styles.itemName}>{result.reward.name}</Text>
-                                    <Text style={styles.itemDescription}>{result.reward.description}</Text>
-                                    <Text style={styles.itemType}>{result.reward.type}</Text>
-                                </View>
-                            )}
-                        </View>
-                    ))
-                ) : (
-                    <Text style={styles.noResults}>No results available.</Text>
-                )}
+                <View style={styles.iconContainer}>
+                    <View style={styles.icon}>
+                        <Text style={styles.iconText}>🏯</Text>
+                    </View>
+                </View>
 
-                <TouchableOpacity onPress={navigateToLessons} style={styles.closeButton}>
-                    <Text style={styles.closeButtonText}>Go to Lessons</Text>
+                <View style={styles.resultDetails}>
+                    <View style={styles.starsContainer}>
+                        <Text style={styles.starsText}>+{results.stars} Stars</Text>
+                    </View>
+
+                    <View style={styles.progressContainer}>
+                        <Animated.View
+                            style={[
+                                styles.progressBar,
+                                {
+                                    width: progress.interpolate({
+                                        inputRange: [0, 100],
+                                        outputRange: ['0%', '100%'],
+                                    }),
+                                    backgroundColor: getProgressColor(results.percentage),
+                                },
+                            ]}
+                        />
+                        <Text style={styles.progressText}>{results.percentage}%</Text>
+                    </View>
+                </View>
+
+                <TouchableOpacity onPress={navigateToLessons} style={styles.continueButton}>
+                    <Text style={styles.continueButtonText}>Continue</Text>
                 </TouchableOpacity>
-            </View>
+            </Animated.View>
         </View>
     );
 };
@@ -78,26 +96,54 @@ const styles = StyleSheet.create({
         left: 0,
         right: 0,
         bottom: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.9)', // Темний фон із 90% прозорістю
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
         zIndex: 1000,
     },
     container: {
         width: '90%',
-        padding: 16,
-        backgroundColor: '#f0f0f0',
+        backgroundColor: '#ffffff',
         borderRadius: 10,
+        padding: 20,
         alignItems: 'center',
+        justifyContent: 'center',
+        elevation: 5,
     },
     title: {
-        fontSize: 20,
+        fontSize: 24,
         fontWeight: 'bold',
+        color: '#333',
+        marginBottom: 20,
+        textAlign: 'center',
+    },
+    iconContainer: {
+        marginBottom: 20,
+    },
+    icon: {
+        width: 100,
+        height: 100,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#ffcc00',
+        borderRadius: 50,
+    },
+    iconText: {
+        fontSize: 40,
+    },
+    resultDetails: {
+        width: '100%',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    starsContainer: {
         marginBottom: 10,
     },
-    resultItem: {
-        marginBottom: 15,
-        alignItems: 'center',
+    starsText: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#ffa500',
+        textAlign: 'center',
     },
     progressContainer: {
         width: '100%',
@@ -106,7 +152,6 @@ const styles = StyleSheet.create({
         borderRadius: 15,
         overflow: 'hidden',
         position: 'relative',
-        marginVertical: 5,
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -114,14 +159,6 @@ const styles = StyleSheet.create({
         position: 'absolute',
         left: 0,
         height: '100%',
-        backgroundColor: 'green',
-        borderRadius: 15,
-    },
-    remainingBar: {
-        position: 'absolute',
-        right: 0,
-        height: '100%',
-        backgroundColor: 'red',
         borderRadius: 15,
     },
     progressText: {
@@ -130,43 +167,17 @@ const styles = StyleSheet.create({
         color: '#fff',
         zIndex: 1,
     },
-    rewardImage: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        marginVertical: 8,
-        borderColor: '#ddd',
-        borderWidth: 2,
-    },
-    itemDetails: {
-        marginTop: 5,
-        alignItems: 'center',
-    },
-    itemName: {
-        fontWeight: '600',
-    },
-    itemDescription: {
-        fontStyle: 'italic',
-        textAlign: 'center',
-    },
-    itemType: {
-        fontSize: 12,
-        color: '#888',
-    },
-    noResults: {
-        fontSize: 16,
-        color: '#888',
-    },
-    closeButton: {
-        marginTop: 10,
-        paddingVertical: 8,
-        paddingHorizontal: 16,
+    continueButton: {
+        marginTop: 20,
+        paddingVertical: 12,
+        paddingHorizontal: 40,
         backgroundColor: '#007bff',
-        borderRadius: 5,
+        borderRadius: 25,
     },
-    closeButtonText: {
+    continueButtonText: {
         color: '#fff',
         fontWeight: 'bold',
+        fontSize: 16,
     },
 });
 
