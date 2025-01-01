@@ -1,46 +1,70 @@
 import { API_CONFIG } from '../config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export const getMangaByIdSorted = async (id) => {
-    try {
-        const responce = await fetch(`${API_CONFIG.BASE_URL}/manga/sorted/${id}`, {
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
+// Логін користувача
+export const loginUser = async (username, password) => {
+  console.log('Attempting to login with username:', username); // Логування початку логіну
+  try {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, password }),
+    });
 
-        if(!responce.ok) {
-            const errorText = await responce.text();
-            console.error('Error response: ', errorText);
-            throw new Error(`HTTP error! status: ${responce.status}`);
-        }
+    const data = await response.json();
 
-        const data = await responce.json();
-        return data;
-    } catch (error) {
-        console.error('Error fetching manga:', error);
-        throw new Error('Error fetching manga: ' + error.message);
+    // Логування статусу відповіді
+    console.log('Login response status:', response.status);
+    console.log('Login response data:', data);
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Error in entering into the account');
     }
+
+    if (data.token) {
+      await AsyncStorage.setItem('userToken', data.token);
+      console.log('User token saved in AsyncStorage'); // Логування збереження токену
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Login error:', error.message || 'Error to connect to server');
+    throw new Error(error.message || 'Error to connect to server');
+  }
 };
-export const finishManga = async (answersDTO, userId, mangaId) => {
-    try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}/manga/finish?userId=${userId}&mangaId=${mangaId}`, {
-            method: 'POST', 
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json' 
-            },
-            body: JSON.stringify(answersDTO) 
-        });
 
-        if (!response.ok) {
-            throw new Error('Error finishing manga');
-        }
+// Реєстрація користувача
+export const registerUser = async (username, email, password) => {
+  console.log('Attempting to register with username:', username, 'and email:', email); // Логування початку реєстрації
+  try {
+    const response = await fetch(`${API_CONFIG.BASE_URL}/auth/register`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ username, email, password }),
+    });
 
-        const data = await response.json();
-        return data;
+    const data = await response.json();
 
-    } catch (error) {
-        console.error('Server error:', error);
-        throw error;
+    // Логування статусу відповіді
+    console.log('Registration response status:', response.status);
+    console.log('Registration response data:', data);
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Error in registration');
     }
+
+    if (data.token) {
+      await AsyncStorage.setItem('userToken', data.token);
+      console.log('User token saved in AsyncStorage'); // Логування збереження токену
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Registration error:', error.message || 'Error to connect to server');
+    throw new Error(error.message || 'Error to connect to server');
+  }
 };

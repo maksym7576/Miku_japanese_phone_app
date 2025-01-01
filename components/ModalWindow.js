@@ -20,8 +20,7 @@ const ModalWindow = ({ isCorrect, correctAnswer, description, visible, setVisibl
             <View style={styles.modalBackground}>
                 <Image
                     source={isCorrect ? correctIcon : incorrectIcon}
-                    style={styles.icon}
-                />
+                    style={styles.icon}                />
                 <View style={isCorrect ? styles.modalContainerCorrect : styles.modalContainerIncorrect}>
                     <Text style={styles.modalMessage}>Correct: {correctAnswer}</Text>
                     {description && <Text style={styles.modalMessage}>Explanation: {description}</Text>}

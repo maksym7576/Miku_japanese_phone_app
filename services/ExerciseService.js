@@ -1,25 +1,37 @@
 import { API_CONFIG } from '../config';
 
 export const getExerciseData = async (lessonId) => {
+    console.log('Fetching exercise data for lesson:', lessonId); // Логування початку запиту
     try {
-        const responce = await fetch(`${API_CONFIG.BASE_URL}/exercise/structured/${lessonId}/test`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/exercise/structured/${lessonId}/test`, {
             headers: {
                 'Accept': 'application/json'
             }
         });
-        if(!responce.ok) {
-            const errorText = await responce.text();
-            console.error('Error responce:', errorText);
+
+        // Логування статусу відповіді
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        const data = await responce.json();
+        
+        const data = await response.json();
+        
+        // Логування отриманих даних
+        console.log('Exercise data:', data);
+
         return data;
     } catch (error) {
         console.error('Error fetching lessons:', error);
         throw new Error('Error fetching lessons: ' + error.message);   
     }
 };
+
 export const finishExercise = async (requestBody) => {
+    console.log('Finishing exercise with request body:', requestBody); // Логування початку запиту
     try {
         const response = await fetch(`${API_CONFIG.BASE_URL}/exercise/finish`, {
             method: 'POST',
@@ -29,15 +41,18 @@ export const finishExercise = async (requestBody) => {
             body: JSON.stringify(requestBody),
         });
 
-        // Перевірка на успішність запиту
+        // Логування статусу відповіді
+        console.log('Finish exercise response status:', response.status);
+        
         if (!response.ok) {
             throw new Error(`Failed to finish exercise: ${response.statusText}`);
         }
 
-        // Отримання JSON-даних
         const data = await response.json();
+        
+        // Логування отриманих даних
+        console.log('Finish exercise response data:', data);
 
-        // Перевірка на відповідну структуру
         if (data && data.percentage !== undefined && data.exp !== undefined && Array.isArray(data.rewardsList)) {
             return {
                 percentage: data.percentage,
