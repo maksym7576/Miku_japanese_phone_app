@@ -1,9 +1,9 @@
 import { API_CONFIG } from '../config';
 
-export const getExerciseData = async (lessonId) => {
-    console.log('Fetching exercise data for lesson:', lessonId); // Логування початку запиту
+export const getExerciseData = async (exerciseId) => {
+    console.log('Fetching exercise data for exercise:', exerciseId); // Логування початку запиту
     try {
-        const response = await fetch(`${API_CONFIG.BASE_URL}/exercise/structured/${lessonId}/test`, {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/exercise/structured/${exerciseId}/test`, {
             headers: {
                 'Accept': 'application/json'
             }
@@ -66,5 +66,35 @@ export const finishExercise = async (requestBody) => {
     } catch (error) {
         console.error("Error finishing the exercise:", error);
         throw error; // Пробрасываємо помилку, щоб вона могла бути оброблена в іншому місці
+    }
+};
+
+export const getVideoData = async (videoId) => {
+    console.log('Fetching exercise data for exercise:', videoId); // Логування початку запиту
+    try {
+        const response = await fetch(`${API_CONFIG.BASE_URL}/exercise/get/video/${videoId}`, {
+            headers: {
+                'Accept': 'application/json'
+            }
+        });
+
+        // Логування статусу відповіді
+        console.log('Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        // Логування отриманих даних
+        console.log('Exercise data:', data);
+
+        return data;
+    } catch (error) {
+        console.error('Error fetching lessons:', error);
+        throw new Error('Error fetching lessons: ' + error.message);   
     }
 };

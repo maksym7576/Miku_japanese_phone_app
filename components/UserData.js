@@ -40,7 +40,7 @@ const UserData = () => {
         ) : (
             <Text>Loading...</Text>
         )}
-        <Button title='Logout' onPress={handleLogout}/>
+        <Button onPress={handleLogout}/>
         </View>
     )
 };

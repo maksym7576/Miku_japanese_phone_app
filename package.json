@@ -37,6 +37,7 @@
     "react-native-sound": "^0.11.2",
     "react-native-sound-player": "^0.14.3",
     "react-native-vector-icons": "^10.2.0",
+    "react-native-video": "^6.10.0",
     "react-native-web": "^0.19.13"
   },
   "devDependencies": {

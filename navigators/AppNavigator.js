@@ -10,6 +10,7 @@ import ShopScreen from '../screens/ShopScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import MangaScreen from '../screens/MangaScreen';
 import ExerciseScreen from '../screens/ExerciseScreen';
+import VideoLessonScreen from '../screens/VedeoLessonScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -31,19 +32,20 @@ const AppNavigator = () => {
       {isAuthenticated ? (
         <>
           <Stack.Screen name="MainNavigator" component={MainNavigator} options={{ headerShown: false }} />
-          <Stack.Screen name="LessonDetailScreen" component={LessonDetailScreen} />
+          <Stack.Screen name="LessonDetailScreen" component={LessonDetailScreen} options={{ headerShown: false }}/>
         </>
       ) : (
         <Stack.Screen name="Auth" component={AuthScreen} options={{ headerShown: false }} />
       )}
-      <Stack.Screen name="Lessons" component={MainNavigator} />
+      <Stack.Screen name="Lessons" component={MainNavigator} options={{ headerShown: false }}/>
       <Stack.Screen name="Miku" component={MikuScreen} />
       <Stack.Screen name="Shop" component={ShopScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />
       <Stack.Screen name="LessonDetail" component={LessonDetailScreen} />
       <Stack.Screen name="logout" component={AuthScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="video" component={VideoLessonScreen} options={{ headerShown: false}}/>
       <Stack.Screen name="manga" component={MangaScreen}/>
-      <Stack.Screen name="exercise" component={ExerciseScreen}/>
+      <Stack.Screen name="exercise" component={ExerciseScreen} options={{ headerShown: false }}/>
     </Stack.Navigator>
   );
 };

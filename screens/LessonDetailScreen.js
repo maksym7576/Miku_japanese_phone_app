@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getMangaByIdSorted } from '../services/MangaService';
-import { getExerciseData } from '../services/ExerciseService';
+import { getExerciseData, getVideoData } from '../services/ExerciseService';
 import lessonBackground from '../assets/background/lesson_background.png';   
 
 const { width, height } = Dimensions.get('window');
@@ -167,10 +167,14 @@ const LessonDetailScreen = () => {
         const mangaData = await getMangaByIdSorted(lessonId);
         navigation.navigate('manga', { mangaData });
       } else if (type === 'EXERCISE') {
-        const exerciseData = await getExerciseData(lessonId);
+        const exerciseData = await getExerciseData(exercise.id);
         navigation.navigate('exercise', { exerciseData });
+      } else if (type === 'VIDEO') {
+        const videoData = await getVideoData(exercise.id)
+        console.log('Video Data:', videoData);
+        navigation.navigate('video', { videoData });
       } else {
-        console.log('Video pressed');
+        console.warn(`Unknown exercise type: ${type}`);
       }
     } catch (error) {
       console.error(`Error handling press for ${type}:`, error);

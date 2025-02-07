@@ -373,6 +373,7 @@ class ExerciseScreen extends Component {
         shadowRadius: 4,
         elevation: 2,
         alignItems: 'center',
+        marginTop: 50, // Додаємо відступ зверху
     },
     progressBarContainer: {
         marginTop: 17,
