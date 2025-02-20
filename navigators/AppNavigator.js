@@ -44,7 +44,7 @@ const AppNavigator = () => {
       <Stack.Screen name="LessonDetail" component={LessonDetailScreen} />
       <Stack.Screen name="logout" component={AuthScreen} options={{ headerShown: false }} />
       <Stack.Screen name="video" component={VideoLessonScreen} options={{ headerShown: false}}/>
-      <Stack.Screen name="manga" component={MangaScreen}/>
+      <Stack.Screen name="manga" component={MangaScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="exercise" component={ExerciseScreen} options={{ headerShown: false }}/>
     </Stack.Navigator>
   );

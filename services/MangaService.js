@@ -68,3 +68,5 @@ export const registerUser = async (username, email, password) => {
     throw new Error(error.message || 'Error to connect to server');
   }
 };
+
+

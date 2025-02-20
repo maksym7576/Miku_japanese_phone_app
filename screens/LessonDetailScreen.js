@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { getMangaByIdSorted } from '../services/MangaService';
-import { getExerciseData, getVideoData } from '../services/ExerciseService';
+import { getExerciseData, getMangaData, getVideoData } from '../services/ExerciseService';
 import lessonBackground from '../assets/background/lesson_background.png';   
 
 const { width, height } = Dimensions.get('window');
@@ -164,7 +164,7 @@ const LessonDetailScreen = () => {
   const handleExercisePress = async (exercise, type) => {
     try {
       if (type === 'MANGA') {
-        const mangaData = await getMangaByIdSorted(lessonId);
+        const mangaData = await getMangaData(exercise.id);
         navigation.navigate('manga', { mangaData });
       } else if (type === 'EXERCISE') {
         const exerciseData = await getExerciseData(exercise.id);
