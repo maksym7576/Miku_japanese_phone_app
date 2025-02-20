@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, FlatList } from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { getCharacterData } from '../services/characterService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getNovelData } from '../services/ExerciseService';
+import { useNavigation } from '@react-navigation/native';
 const MikuScreen = () => {
 const [ characterData, setCharacterData ] = useState({})
 const [loading, setLoading] = useState(true);  
@@ -10,6 +12,8 @@ const [images, setImages] = useState({
   neutral: null,
   sad: null,
 });
+
+const navigation = useNavigation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,18 +55,30 @@ const [images, setImages] = useState({
     );
   }
 
+  const handlePress = async (id) => {
+    try {
+      const response = await getNovelData(id);
+      console.log('Novel Data:', response);
+      navigation.navigate('novel', { novelData: response });
+    } catch (error) {
+      console.log("Error:", error);
+    }
+  };
+  
+
   const renderNovelItem = ({ item }) => (
+    <TouchableOpacity onPress={() => handlePress(item.id)}>
     <View style={styles.novelCard}>
       <Text style={styles.novelName}>{item.name}</Text>
       <Text style={styles.novelStatus}>{item.completed ? 'Completed' : 'In Progress'}</Text>
     </View>
+    </TouchableOpacity>
   );
 
   return (
     <View style={styles.container}>
       {characterData.character ? (
         <>
-          {/* Центрований блок */}
           <View style={styles.centerContent}>
             <View style={styles.outerImageContainer}>
               <View style={styles.imageContainer}>
@@ -81,7 +97,6 @@ const [images, setImages] = useState({
               </Text>
             </View>
           </View>
-          {/* Нижній блок для FlatList */}
           <View style={styles.flatListContainer}>
             <FlatList
               data={characterData.novelsList}

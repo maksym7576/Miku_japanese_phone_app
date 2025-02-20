@@ -11,6 +11,7 @@ import ProfileScreen from '../screens/ProfileScreen';
 import MangaScreen from '../screens/MangaScreen';
 import ExerciseScreen from '../screens/ExerciseScreen';
 import VideoLessonScreen from '../screens/VedeoLessonScreen';
+import NovelScreen from '../screens/NovelScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -46,6 +47,7 @@ const AppNavigator = () => {
       <Stack.Screen name="video" component={VideoLessonScreen} options={{ headerShown: false}}/>
       <Stack.Screen name="manga" component={MangaScreen} options={{ headerShown: false }}/>
       <Stack.Screen name="exercise" component={ExerciseScreen} options={{ headerShown: false }}/>
+      <Stack.Screen name="novel" component={NovelScreen} options={{ headerShown: false }}/>
     </Stack.Navigator>
   );
 };
