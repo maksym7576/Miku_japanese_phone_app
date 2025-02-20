@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, Modal, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, Modal, TouchableWithoutFeedback, RefreshControl, ScrollView } from 'react-native';
 import { getCharacterData } from '../services/characterService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getNovelData } from '../services/ExerciseService';
@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 const MikuScreen = () => {
   const [characterData, setCharacterData] = useState({});
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [images, setImages] = useState({
     happy: null,
     neutral: null,
@@ -18,21 +19,23 @@ const MikuScreen = () => {
 
   const navigation = useNavigation();
 
+  const fetchData = async () => {
+    try {
+      const userDataJson = await AsyncStorage.getItem('userData');
+      const userData = userDataJson ? JSON.parse(userDataJson) : {};
+      console.log('User data:', userData);
+      const response = await getCharacterData(userData.id);
+      console.log('Character data:', response);
+      setCharacterData(response);
+    } catch (error) {
+      console.log("Error:", error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const userDataJson = await AsyncStorage.getItem('userData');
-        const userData = userDataJson ? JSON.parse(userDataJson) : {};
-        console.log('User data:', userData);
-        const response = await getCharacterData(userData.id);
-        console.log('Character data:', response);
-        setCharacterData(response);
-      } catch (error) {
-        console.log("Error:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
 
@@ -47,6 +50,11 @@ const MikuScreen = () => {
 
     loadImages();
   }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchData();
+  };
 
   if (loading) {
     return (
@@ -76,7 +84,12 @@ const MikuScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <ScrollView
+      contentContainerStyle={styles.container}
+      refreshControl={
+        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
+      }
+    >
       {characterData.character ? (
         <>
           <View style={styles.centerContent}>
@@ -138,7 +151,7 @@ const MikuScreen = () => {
           </View>
         </TouchableWithoutFeedback>
       </Modal>
-    </View>
+    </ScrollView>
   );
 };
 
