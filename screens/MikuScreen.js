@@ -1,38 +1,40 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, TouchableOpacity, Modal, TouchableWithoutFeedback } from 'react-native';
 import { getCharacterData } from '../services/characterService';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getNovelData } from '../services/ExerciseService';
 import { useNavigation } from '@react-navigation/native';
-const MikuScreen = () => {
-const [ characterData, setCharacterData ] = useState({})
-const [loading, setLoading] = useState(true);  
-const [images, setImages] = useState({
-  happy: null,
-  neutral: null,
-  sad: null,
-});
+import { Ionicons } from '@expo/vector-icons';
 
-const navigation = useNavigation();
+const MikuScreen = () => {
+  const [characterData, setCharacterData] = useState({});
+  const [loading, setLoading] = useState(true);
+  const [images, setImages] = useState({
+    happy: null,
+    neutral: null,
+    sad: null,
+  });
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const navigation = useNavigation();
 
   useEffect(() => {
     const fetchData = async () => {
-    try {
-    const userDataJson = await AsyncStorage.getItem('userData');
-    const userData = userDataJson ? JSON.parse(userDataJson) : {};
-    console.log('User data:', userData);
-    const response = await getCharacterData(userData.id);
-    console.log('Character data:', response);
-    setCharacterData(response);
-    } catch (error) {
-      console.log("Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  fetchData();
+      try {
+        const userDataJson = await AsyncStorage.getItem('userData');
+        const userData = userDataJson ? JSON.parse(userDataJson) : {};
+        console.log('User data:', userData);
+        const response = await getCharacterData(userData.id);
+        console.log('Character data:', response);
+        setCharacterData(response);
+      } catch (error) {
+        console.log("Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
-
 
   useEffect(() => {
     const loadImages = () => {
@@ -46,7 +48,6 @@ const navigation = useNavigation();
     loadImages();
   }, []);
 
-
   if (loading) {
     return (
       <View style={styles.container}>
@@ -59,19 +60,18 @@ const navigation = useNavigation();
     try {
       const response = await getNovelData(id);
       console.log('Novel Data:', response);
-      navigation.navigate('novel', { novelData: response });
+      navigation.navigate('novel', { response });
     } catch (error) {
       console.log("Error:", error);
     }
   };
-  
 
   const renderNovelItem = ({ item }) => (
     <TouchableOpacity onPress={() => handlePress(item.id)}>
-    <View style={styles.novelCard}>
-      <Text style={styles.novelName}>{item.name}</Text>
-      <Text style={styles.novelStatus}>{item.completed ? 'Completed' : 'In Progress'}</Text>
-    </View>
+      <View style={styles.novelCard}>
+        <Text style={styles.novelName}>{item.name}</Text>
+        <Text style={styles.novelStatus}>{item.completed ? 'Completed' : 'In Progress'}</Text>
+      </View>
     </TouchableOpacity>
   );
 
@@ -81,15 +81,17 @@ const navigation = useNavigation();
         <>
           <View style={styles.centerContent}>
             <View style={styles.outerImageContainer}>
-              <View style={styles.imageContainer}>
-                {characterData.character.characterMood > 60 ? (
-                  <Image source={images.happy} style={styles.image} />
-                ) : characterData.character.characterMood > 30 ? (
-                  <Image source={images.neutral} style={styles.image} />
-                ) : (
-                  <Image source={images.sad} style={styles.image} />
-                )}
-              </View>
+              <TouchableOpacity onPress={() => setModalVisible(true)}>
+                <View style={styles.imageContainer}>
+                  {characterData.character.characterMood > 60 ? (
+                    <Image source={images.happy} style={styles.image} />
+                  ) : characterData.character.characterMood > 30 ? (
+                    <Image source={images.neutral} style={styles.image} />
+                  ) : (
+                    <Image source={images.sad} style={styles.image} />
+                  )}
+                </View>
+              </TouchableOpacity>
             </View>
             <View style={styles.levelContainer}>
               <Text style={styles.levelText}>
@@ -110,8 +112,34 @@ const navigation = useNavigation();
       ) : (
         <Text>No character data available</Text>
       )}
+
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={modalVisible}
+        onRequestClose={() => {
+          setModalVisible(!modalVisible);
+        }}
+      >
+        <TouchableWithoutFeedback onPress={() => setModalVisible(false)}>
+          <View style={styles.modalOverlay}>
+            <TouchableWithoutFeedback>
+              <View style={styles.modalView}>
+                <TouchableOpacity
+                  style={styles.closeButton}
+                  onPress={() => setModalVisible(false)}
+                >
+                  <Ionicons name="close" size={24} color="black" />
+                </TouchableOpacity>
+                <Text style={styles.modalText}>Character History</Text>
+                <Text>{characterData.character.characterHistory}</Text>
+              </View>
+            </TouchableWithoutFeedback>
+          </View>
+        </TouchableWithoutFeedback>
+      </Modal>
     </View>
-  );  
+  );
 };
 
 const styles = StyleSheet.create({
@@ -128,7 +156,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     width: '100%',
-    paddingBottom: 20, // відступ від самого низу, якщо потрібно
+    paddingBottom: 20,
   },
   outerImageContainer: {
     width: 220,
@@ -186,9 +214,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  novelList: {
-    marginTop: 20,
-  },
   novelCard: {
     width: 150,
     height: 200,
@@ -204,7 +229,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalView: {
+    width: '80%',
+    backgroundColor: 'white',
+    borderRadius: 20,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+  },
+  modalText: {
+    marginBottom: 15,
+    textAlign: 'center',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
 });
-
 
 export default MikuScreen;
