@@ -68,7 +68,7 @@ const MikuScreen = () => {
     try {
       const response = await getNovelData(id);
       console.log('Novel Data:', response);
-      navigation.navigate('novel', { response });
+      navigation.navigate('novel', { novelData: response });
     } catch (error) {
       console.log("Error:", error);
     }
